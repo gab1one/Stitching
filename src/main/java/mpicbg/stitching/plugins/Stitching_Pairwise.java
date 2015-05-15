@@ -321,7 +321,7 @@ public class Stitching_Pairwise implements PlugIn {
         performPairWiseStitching(imp1, imp2, params);
     }
 
-    public ImagePlus performPairWiseStitching(final ImagePlus imp1,
+    public static ImagePlus performPairWiseStitching(final ImagePlus imp1,
             final ImagePlus imp2, final StitchingParameters params) {
         final ArrayList<InvertibleBoundable> models =
                 new ArrayList<InvertibleBoundable>();
