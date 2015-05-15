@@ -3,8 +3,8 @@ package stitching;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import mpicbg.stitching.fusion.ClassifiedRegion;
-import mpicbg.stitching.fusion.Interval;
+import mpicbg.stitching.stitching.fusion.ClassifiedRegion;
+import mpicbg.stitching.stitching.fusion.Interval;
 
 import org.junit.After;
 import org.junit.Assert;

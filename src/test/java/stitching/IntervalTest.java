@@ -4,7 +4,7 @@ package stitching;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import mpicbg.stitching.fusion.Interval;
+import mpicbg.stitching.stitching.fusion.Interval;
 
 import org.junit.Test;
 
