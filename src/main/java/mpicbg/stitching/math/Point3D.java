@@ -11,47 +11,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- * 
+ *
  * An execption is the FFT implementation of Dave Hale which we use as a library,
- * wich is released under the terms of the Common Public License - v1.0, which is 
- * available at http://www.eclipse.org/legal/cpl-v10.html  
+ * wich is released under the terms of the Common Public License - v1.0, which is
+ * available at http://www.eclipse.org/legal/cpl-v10.html
  *
  * @author Stephan Preibisch
  */
 package mpicbg.stitching.math;
 
-public class Point3D
-{
-	public int x = 0, y = 0, z = 0;
-	public float value;
-	public boolean printValue = false;
+public class Point3D {
+    public int x = 0, y = 0, z = 0;
+    public float value;
+    public boolean printValue = false;
 
-	public Point3D(int x, int y, int z)
-	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
+    public Point3D(final int x, final int y, final int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
 
-	public Point3D(int x, int y, int z, float value)
-	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.value = value;
-	}
+    public Point3D(final int x, final int y, final int z, final float value) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.value = value;
+    }
 
-	@Override
-	public String toString()
-	{
-		if (printValue)
-			return "x: " + x + " y: " + y  + " z: " + z + " value: " + value;
-		return "x: " + x + " y: " + y  + " z: " + z;
-	}
-	
-	@Override
-	public Point3D clone()
-	{
-		return new Point3D(x, y, z, value);
-	}
+    @Override
+    public String toString() {
+        if (printValue) {
+            return "x: " + x + " y: " + y + " z: " + z + " value: " + value;
+        }
+        return "x: " + x + " y: " + y + " z: " + z;
+    }
+
+    @Override
+    public Point3D clone() {
+        return new Point3D(x, y, z, value);
+    }
 }

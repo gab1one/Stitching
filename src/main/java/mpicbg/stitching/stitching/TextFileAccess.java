@@ -9,85 +9,68 @@ import java.io.PrintWriter;
 
 import mpicbg.stitching.utils.Log;
 
-public class TextFileAccess 
-{
-	public static BufferedReader openFileRead(final File file)
-	{
-		BufferedReader inputFile;
-		try
-		{
-			inputFile = new BufferedReader(new FileReader(file));
-		}
-		catch (IOException e)
-		{
-			Log.error("TextFileAccess.openFileRead(): " + e);
-			inputFile = null;
-		}
-		return (inputFile);
-	}
+public class TextFileAccess {
+    public static BufferedReader openFileRead(final File file) {
+        BufferedReader inputFile;
+        try {
+            inputFile = new BufferedReader(new FileReader(file));
+        } catch (final IOException e) {
+            Log.error("TextFileAccess.openFileRead(): " + e);
+            inputFile = null;
+        }
+        return (inputFile);
+    }
 
-	public static BufferedReader openFileRead(final String fileName)
-	{
-		BufferedReader inputFile;
-		try
-		{
-			inputFile = new BufferedReader(new FileReader(fileName));
-		}
-		catch (IOException e)
-		{
-			Log.error("TextFileAccess.openFileRead(): " + e);
-			inputFile = null;
-		}
-		return (inputFile);
-	}
+    public static BufferedReader openFileRead(final String fileName) {
+        BufferedReader inputFile;
+        try {
+            inputFile = new BufferedReader(new FileReader(fileName));
+        } catch (final IOException e) {
+            Log.error("TextFileAccess.openFileRead(): " + e);
+            inputFile = null;
+        }
+        return (inputFile);
+    }
 
-	public static PrintWriter openFileWrite(final File file)
-	{
-		PrintWriter outputFile;
-		try
-		{
-			outputFile = new PrintWriter(new FileWriter(file));
-		}
-		catch (IOException e)
-		{
-			Log.error("TextFileAccess.openFileWrite(): " + e);
-			outputFile = null;
-		}
-		return (outputFile);
-	}
-	
-	public static PrintWriter openFileWrite(final String fileName)
-	{
-		PrintWriter outputFile;
-		try
-		{
-			outputFile = new PrintWriter(new FileWriter(fileName));
-		}
-		catch (IOException e)
-		{
-			Log.error("TextFileAccess.openFileWrite(): " + e);
-			outputFile = null;
-		}
-		return (outputFile);
-	}
-	
-	public static PrintWriter openFileWriteEx(final File file) throws IOException
-	{
-		return new PrintWriter(new FileWriter(file));
-	}
+    public static PrintWriter openFileWrite(final File file) {
+        PrintWriter outputFile;
+        try {
+            outputFile = new PrintWriter(new FileWriter(file));
+        } catch (final IOException e) {
+            Log.error("TextFileAccess.openFileWrite(): " + e);
+            outputFile = null;
+        }
+        return (outputFile);
+    }
 
-	public static BufferedReader openFileReadEx(final File file) throws IOException
-	{
-		return new BufferedReader(new FileReader(file));
-	}
+    public static PrintWriter openFileWrite(final String fileName) {
+        PrintWriter outputFile;
+        try {
+            outputFile = new PrintWriter(new FileWriter(fileName));
+        } catch (final IOException e) {
+            Log.error("TextFileAccess.openFileWrite(): " + e);
+            outputFile = null;
+        }
+        return (outputFile);
+    }
 
-	public static PrintWriter openFileWriteEx(final String fileName) throws IOException
-	{
-		return new PrintWriter(new FileWriter(fileName));
-	}
+    public static PrintWriter openFileWriteEx(final File file)
+            throws IOException {
+        return new PrintWriter(new FileWriter(file));
+    }
 
-	public static BufferedReader openFileReadEx(final String fileName) throws IOException
-	{
-		return new BufferedReader(new FileReader(fileName));
-	}
+    public static BufferedReader openFileReadEx(final File file)
+            throws IOException {
+        return new BufferedReader(new FileReader(file));
+    }
+
+    public static PrintWriter openFileWriteEx(final String fileName)
+            throws IOException {
+        return new PrintWriter(new FileWriter(fileName));
+    }
+
+    public static BufferedReader openFileReadEx(final String fileName)
+            throws IOException {
+        return new BufferedReader(new FileReader(fileName));
+    }
 }

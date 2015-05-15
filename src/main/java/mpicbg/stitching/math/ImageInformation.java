@@ -11,75 +11,72 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- * 
+ *
  * An execption is the FFT implementation of Dave Hale which we use as a library,
- * wich is released under the terms of the Common Public License - v1.0, which is 
- * available at http://www.eclipse.org/legal/cpl-v10.html  
+ * wich is released under the terms of the Common Public License - v1.0, which is
+ * available at http://www.eclipse.org/legal/cpl-v10.html
  *
  * @author Stephan Preibisch
  */
 package mpicbg.stitching.math;
 
-
+import ij.ImagePlus;
 import mpicbg.stitching.math.model.Model;
 import mpicbg.stitching.math.model.Tile;
-import ij.ImagePlus;
 
-public class ImageInformation extends Tile implements Comparable<ImageInformation>
-{
-	public ImageInformation(int dim, int id, Model model)
-	{
-		super (1, 1, model);
-		
-		offset = new float[dim];
-		size = new float[dim];
-		position = new float[dim];
-		this.id = id;
-		this.dim = dim;
-	}
-	
-	public Object[] imageStack;
-	public int w, d, h;
+public class ImageInformation extends Tile implements
+Comparable<ImageInformation> {
+    public ImageInformation(final int dim, final int id, final Model model) {
+        super(1, 1, model);
 
-	public int imageType;
-	
-	// -1 means ignore the series number, it is needed when loading
-	// stacks that are in one file
-	public int seriesNumber = -1;
-	
-	public String imageName;
-	public ImagePlus imp = null, maxIntensity = null, tmp = null;
-	public boolean overlaps = false;
-	public boolean invalid = false;
-	final public float[] offset;
-	final public float[] size;
-	public boolean closeAtEnd = false;
-	public float[] position;
-	final public int id, dim;
-	
-	@Override
-	public String toString()
-	{
-		String out =  "Image: '" + imageName + "' Imp: '" + imp + "' Offset: (";
-		
-		for (int i = 0; i < offset.length; i++)
-		{
-			if (i < offset.length - 1)					
-				out += offset[i] + ", ";
-			else
-				out += offset[i] + ")";
-		}
-		return out;
-	}
+        offset = new float[dim];
+        size = new float[dim];
+        position = new float[dim];
+        this.id = id;
+        this.dim = dim;
+    }
 
-	@Override
-	public int compareTo(ImageInformation o)
-	{
-		if (id < o.id)
-			return -1;
-		else if (id > o.id)
-			return 1;
-		else
-			return 0;
-	}
+    public Object[] imageStack;
+    public int w, d, h;
+
+    public int imageType;
+
+    // -1 means ignore the series number, it is needed when loading
+    // stacks that are in one file
+    public int seriesNumber = -1;
+
+    public String imageName;
+    public ImagePlus imp = null, maxIntensity = null, tmp = null;
+    public boolean overlaps = false;
+    public boolean invalid = false;
+    final public float[] offset;
+    final public float[] size;
+    public boolean closeAtEnd = false;
+    public float[] position;
+    final public int id, dim;
+
+    @Override
+    public String toString() {
+        String out = "Image: '" + imageName + "' Imp: '" + imp + "' Offset: (";
+
+        for (int i = 0; i < offset.length; i++) {
+            if (i < offset.length - 1) {
+                out += offset[i] + ", ";
+            } else {
+                out += offset[i] + ")";
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public int compareTo(final ImageInformation o) {
+        if (id < o.id) {
+            return -1;
+        } else if (id > o.id) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }

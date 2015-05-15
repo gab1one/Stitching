@@ -1,37 +1,40 @@
 package mpicbg.stitching.stitching.fusion;
 
 /**
- * This class implements a fusion where only the pixel value
- * of one of the images is used. In fact, there is no fusion
- * but a simple overlap of one image over the others. 
- * 
+ * This class implements a fusion where only the pixel value of one of the
+ * images is used. In fact, there is no fusion but a simple overlap of one image
+ * over the others.
+ *
  * @author Ignacio Arganda Carreras (iarganda at mit.edu)
  *
  */
 public class OverlapFusion implements PixelFusion {
 
-	double lastValue;
-	
-	public OverlapFusion() { clear(); }
-	
-	@Override
-	public void clear() {
-		lastValue = 0;
-	}
+    double lastValue;
 
-	@Override
-	public void addValue(double value, int imageId, double[] localPosition) {
-		lastValue = value;	
-	}
+    public OverlapFusion() {
+        clear();
+    }
 
-	@Override
-	public double getValue() {		
-		return lastValue;
-	}
+    @Override
+    public void clear() {
+        lastValue = 0;
+    }
 
-	@Override
-	public PixelFusion copy() {		
-		return new OverlapFusion();
-	}
+    @Override
+    public void addValue(final double value, final int imageId,
+            final double[] localPosition) {
+        lastValue = value;
+    }
+
+    @Override
+    public double getValue() {
+        return lastValue;
+    }
+
+    @Override
+    public PixelFusion copy() {
+        return new OverlapFusion();
+    }
 
 }
