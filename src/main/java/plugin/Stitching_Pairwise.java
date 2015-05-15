@@ -278,7 +278,7 @@ public class Stitching_Pairwise implements PlugIn
 		performPairWiseStitching( imp1, imp2, params );
 	}
 	
-	public static void performPairWiseStitching( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
+	public ImagePlus performPairWiseStitching( final ImagePlus imp1, final ImagePlus imp2, final StitchingParameters params )
 	{
 		final ArrayList<InvertibleBoundable> models = new ArrayList< InvertibleBoundable >();
 		
@@ -425,14 +425,9 @@ public class Stitching_Pairwise implements PlugIn
 			ci = fuse( new UnsignedShortType(), imp1, imp2, models, params );
 		else
 			ci = fuse( new UnsignedByteType(), imp1, imp2, models, params );
-		
-		if ( ci != null )
-		{
-			ci.setTitle( params.fusedName );
-			ci.show();
-		}
 
 		Log.info( "Finished ... (" + (System.currentTimeMillis() - start) + " ms)");
+		return ci;
 	}
 	
 	protected static < T extends RealType< T > & NativeType< T > > ImagePlus fuse( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final ArrayList<InvertibleBoundable> models, final StitchingParameters params )
