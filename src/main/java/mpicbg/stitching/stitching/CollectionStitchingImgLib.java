@@ -138,7 +138,7 @@ public class CollectionStitchingImgLib
 				if ( e2.offset[ dim ] + e2.size[ dim ] <= e1.offset[ dim ] + e1.size[ dim ] )
 					end[ dim ] = Math.round( e2.offset[ dim ] + e2.size[ dim ] - e1.offset[ dim ] );
 				else
-					end[ dim ] = Math.round( e1.size[ dim ] );
+					end[ dim ] =  e1.size[ dim ];
 			}
 			else if ( e2.offset[ dim ] + e2.size[ dim ] <= e1.offset[ dim ] + e1.size[ dim ] ) // end of 2 lies inside 1
 			{
