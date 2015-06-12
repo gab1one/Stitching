@@ -1,4 +1,4 @@
-package mpicbg.stitching.plugins;
+package mpicbg.stitching.plugin;
 
 import static mpicbg.stitching.math.CommonFunctions.addHyperLinkListener;
 import fiji.stacks.Hyperstack_rearranger;
@@ -264,12 +264,12 @@ public class Stitching_Pairwise implements PlugIn {
         params.channel2 = defaultChannel2 = gd2.getNextChoiceIndex();
 
         // if there is only one channel we do not need to average
-        if (channels1.length == 2) {
+        if (numChannels1 == 1) {
             params.channel1 = 1;
         }
 
         // if there is only one channel we do not need to average
-        if (channels2.length == 2) {
+        if (numChannels2 == 1) {
             params.channel2 = 1;
         }
 

@@ -1,4 +1,4 @@
-package mpicbg.stitching.plugins;
+package mpicbg.stitching.plugin;
 
 import static mpicbg.stitching.math.CommonFunctions.addHyperLinkListener;
 import fiji.util.gui.GenericDialogPlus;
