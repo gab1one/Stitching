@@ -103,10 +103,10 @@ public class CollectionStitchingImgLib {
                                         + ": "
                                         + Util.printCoordinates(result
                                                 .getOffset())
-                                                + " correlation (R)="
-                                                + result.getCrossCorrelation() + " ("
-                                                + (System.currentTimeMillis() - start)
-                                                + " ms)");
+                                        + " correlation (R)="
+                                        + result.getCrossCorrelation() + " ("
+                                        + (System.currentTimeMillis() - start)
+                                        + " ms)");
                             }
                         }
                     }
@@ -232,15 +232,16 @@ public class CollectionStitchingImgLib {
                 final ImageCollectionElement e1 = elements.get(i);
                 final ImageCollectionElement e2 = elements.get(j);
 
-                boolean overlapping = true;
-
+                boolean overlapping = false;
                 for (int d = 0; d < params.dimensionality; ++d) {
-                    if (!((e2.offset[d] >= e1.offset[d] && e2.offset[d] <= e1.offset[d]
-                            + e1.size[d])
-                            || (e2.offset[d] + e2.size[d] >= e1.offset[d] && e2.offset[d]
-                                    + e2.size[d] <= e1.offset[d] + e1.size[d]) || (e2.offset[d] <= e1.offset[d] && e2.offset[d] >= e1.offset[d]
-                                            + e1.size[d]))) {
-                        overlapping = false;
+                    if (e2.offset[d] >= e1.offset[d]
+                            && e2.offset[d] <= e1.offset[d] + e1.size[d]
+                            || e2.offset[d] + e2.size[d] >= e1.offset[d]
+                            && e2.offset[d] + e2.size[d] <= e1.offset[d]
+                                    + e1.size[d]
+                            || e2.offset[d] <= e1.offset[d]
+                            && e2.offset[d] >= e1.offset[d] + e1.size[d]) {
+                        overlapping = true;
                     }
                 }
 

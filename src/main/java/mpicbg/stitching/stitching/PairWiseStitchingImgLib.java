@@ -46,8 +46,8 @@ public class PairWiseStitchingImgLib {
         // can both images be wrapped into imglib without copying
         final boolean canWrap =
                 !StitchingParameters.alwaysCopy
-                && canWrapIntoImgLib(imp1, roi1, params.channel1)
-                && canWrapIntoImgLib(imp2, roi2, params.channel2);
+                        && canWrapIntoImgLib(imp1, roi1, params.channel1)
+                        && canWrapIntoImgLib(imp2, roi2, params.channel2);
 
         //
         // the ugly but correct way into generic programming...
@@ -69,14 +69,14 @@ public class PairWiseStitchingImgLib {
                                     image1,
                                     getWrappedImageUnsignedShort(imp2,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY8) {
                     result =
                             performStitching(
                                     image1,
                                     getWrappedImageUnsignedByte(imp2,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else {
                     Log.error("Unknown image type: " + imp2.getType());
                 }
@@ -99,14 +99,14 @@ public class PairWiseStitchingImgLib {
                                     image1,
                                     getWrappedImageUnsignedShort(imp2,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY8) {
                     result =
                             performStitching(
                                     image1,
                                     getWrappedImageUnsignedByte(imp2,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else {
                     Log.error("Unknown image type: " + imp2.getType());
                 }
@@ -129,14 +129,14 @@ public class PairWiseStitchingImgLib {
                                     image1,
                                     getWrappedImageUnsignedShort(imp2,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY8) {
                     result =
                             performStitching(
                                     image1,
                                     getWrappedImageUnsignedByte(imp2,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else {
                     Log.error("Unknown image type: " + imp2.getType());
                 }
@@ -168,21 +168,21 @@ public class PairWiseStitchingImgLib {
                                     image1,
                                     getImage(imp2, roi2, imgFactoryFloat,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY16) {
                     result =
                             performStitching(
                                     image1,
                                     getImage(imp2, roi2, imgFactoryShort,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY8) {
                     result =
                             performStitching(
                                     image1,
                                     getImage(imp2, roi2, imgFactoryByte,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else {
                     Log.error("Unknown image type: " + imp2.getType());
                 }
@@ -197,21 +197,21 @@ public class PairWiseStitchingImgLib {
                                     image1,
                                     getImage(imp2, roi2, imgFactoryFloat,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY16) {
                     result =
                             performStitching(
                                     image1,
                                     getImage(imp2, roi2, imgFactoryShort,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY8) {
                     result =
                             performStitching(
                                     image1,
                                     getImage(imp2, roi2, imgFactoryByte,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else {
                     Log.error("Unknown image type: " + imp2.getType());
                 }
@@ -226,21 +226,21 @@ public class PairWiseStitchingImgLib {
                                     image1,
                                     getImage(imp2, roi2, imgFactoryFloat,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY16) {
                     result =
                             performStitching(
                                     image1,
                                     getImage(imp2, roi2, imgFactoryShort,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else if (imp2.getType() == ImagePlus.GRAY8) {
                     result =
                             performStitching(
                                     image1,
                                     getImage(imp2, roi2, imgFactoryByte,
                                             params.channel2, timepoint2),
-                                            params);
+                                    params);
                 } else {
                     Log.error("Unknown image type: " + imp2.getType());
                 }
@@ -295,9 +295,7 @@ public class PairWiseStitchingImgLib {
                 new PhaseCorrelation<T, S>(img1, img2);
         phaseCorr.setInvestigateNumPeaks(numPeaks);
 
-        if (subpixelAccuracy) {
-            phaseCorr.setKeepPhaseCorrelationMatrix(true);
-        }
+        phaseCorr.setKeepPhaseCorrelationMatrix(subpixelAccuracy);
 
         phaseCorr.setComputeFFTinParalell(true);
         if (!phaseCorr.process()) {
@@ -572,7 +570,7 @@ public class PairWiseStitchingImgLib {
 
         final Vector<Chunk> threadChunks =
                 SimpleMultiThreading
-                .divideIntoChunks(imageSize, threads.length);
+                        .divideIntoChunks(imageSize, threads.length);
 
         for (int ithread = 0; ithread < threads.length; ++ithread) {
             threads[ithread] = new Thread(new Runnable() {
@@ -739,11 +737,11 @@ public class PairWiseStitchingImgLib {
     /*
      * protected static Roi getOnlyRectangularRoi( final ImagePlus imp ) { Roi
      * roi = imp.getRoi();
-     *
+     * 
      * // we can only do rectangular rois if ( roi != null && roi.getType() !=
      * Roi.RECTANGLE ) { Log.warn( "roi for " + imp.getTitle() +
      * " is not a rectangle, we have to ignore it." ); roi = null; }
-     *
+     * 
      * return roi; }
      */
 }
