@@ -50,6 +50,42 @@ import edu.mines.jtk.dsp.FftComplex;
 import edu.mines.jtk.dsp.FftReal;
 
 public class CommonFunctions {
+    
+    public enum FusionType {
+        OVERLAY("Overlay into Composite Image"), LINEAR_BLENDING(
+                "Linear Blending"), AVERAGE("Average Intensity"), MEDIAN(
+                "Median Intensity"), MAX_INTENSITY("Max Intensity"),
+        MIN_INTENSITY("Min Intensity"), INTENSITY_RANDOM_TILE(
+                "Intensity of Random Input Tile"),
+        NO_FUSE("Do not fuse Images");
+
+        final String name;
+
+        FusionType(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+    }
+    
+    public static String[] fusionMethodList = { "Linear Blending", "Average",
+        "Median", "Max. Intensity", "Min. Intensity",
+        "Intensity of random input tile", "Overlay into composite image",
+    "Do not fuse images" };
+    public static String[] fusionMethodListSimple = {
+        "Overlay into composite image", "Do not fuse images" };
+    public static String[] fusionMethodListGrid = { "Linear Blending",
+        "Average", "Median", "Max. Intensity", "Min. Intensity",
+        "Intensity of random input tile", /* "Overlay into composite image", */
+    "Do not fuse images (only write TileConfiguration)" };
+    
+
+    
+    
     public static String[] methodList = { "Average", "Linear Blending",
         "Max. Intensity", "Min. Intensity", "Red-Cyan Overlay" };
     public final static int AVG = 0, LIN_BLEND = 1, MAX = 2, MIN = 3,
@@ -63,16 +99,6 @@ public class CommonFunctions {
         "Red and Green", "Red and Blue", "Green and Blue",
     "Red, Green and Blue" };
 
-    public static String[] fusionMethodList = { "Linear Blending", "Average",
-        "Median", "Max. Intensity", "Min. Intensity",
-        "Intensity of random input tile", "Overlay into composite image",
-    "Do not fuse images" };
-    public static String[] fusionMethodListSimple = {
-        "Overlay into composite image", "Do not fuse images" };
-    public static String[] fusionMethodListGrid = { "Linear Blending",
-        "Average", "Median", "Max. Intensity", "Min. Intensity",
-        "Intensity of random input tile", /* "Overlay into composite image", */
-    "Do not fuse images (only write TileConfiguration)" };
     public static String[] timeSelect = {
         "Apply registration of first time-point to all other time-points",
         "Register images adjacently over time",

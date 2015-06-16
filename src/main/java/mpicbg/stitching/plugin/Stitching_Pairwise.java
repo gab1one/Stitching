@@ -1,17 +1,12 @@
 package mpicbg.stitching.plugin;
 
-import static mpicbg.stitching.math.CommonFunctions.addHyperLinkListener;
-import fiji.stacks.Hyperstack_rearranger;
 import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
-import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,7 +14,7 @@ import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.Model;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
-import mpicbg.stitching.math.CommonFunctions;
+import mpicbg.stitching.math.CommonFunctions.FusionType;
 import mpicbg.stitching.stitching.ComparePair;
 import mpicbg.stitching.stitching.GlobalOptimization;
 import mpicbg.stitching.stitching.ImagePlusTimePoint;
@@ -79,206 +74,219 @@ public class Stitching_Pairwise implements PlugIn {
 
         // the simplest case, only one registration necessary
         if (imp1.getNFrames() == 1 || params.timeSelect == 0) {
-            // compute the stitching
-            final long start = System.currentTimeMillis();
+            singleTimepointStitching(imp1, imp2, params, models);
+        } else {
+            multiTimepointStitching(imp1, imp2, params, models);
+        }
+        // now fuse
+        return fuseImg(imp1, imp2, params, models);
+    }
 
-            final PairWiseStitchingResult result;
+    private static void singleTimepointStitching(final ImagePlus imp1,
+            final ImagePlus imp2, final StitchingParameters params,
+            final ArrayList<InvertibleBoundable> models) {
+        // compute the stitching
+        final long start = System.currentTimeMillis();
 
-            if (params.computeOverlap) {
-                result =
-                        PairWiseStitchingImgLib.stitchPairwise(imp1, imp2,
-                                imp1.getRoi(), imp2.getRoi(), 1, 1, params);
-                Log.info("shift (second relative to first): "
-                        + Util.printCoordinates(result.getOffset())
-                        + " correlation (R)=" + result.getCrossCorrelation()
-                        + " (" + (System.currentTimeMillis() - start) + " ms)");
+        final PairWiseStitchingResult result;
 
-                // update the dialog to show the numbers next time
-                defaultxOffset = result.getOffset(0);
-                defaultyOffset = result.getOffset(1);
-                if (params.dimensionality == 3) {
-                    defaultzOffset = result.getOffset(2);
-                }
-            } else {
-                final float[] offset;
+        if (params.computeOverlap) {
+            result =
+                    PairWiseStitchingImgLib.stitchPairwise(imp1, imp2,
+                            imp1.getRoi(), imp2.getRoi(), 1, 1, params);
+            Log.info("shift (second relative to first): "
+                    + Util.printCoordinates(result.getOffset())
+                    + " correlation (R)=" + result.getCrossCorrelation() + " ("
+                    + (System.currentTimeMillis() - start) + " ms)");
 
-                if (params.dimensionality == 2) {
-                    if (params.subpixelAccuracy) {
-                        offset =
-                                new float[] { (float) params.xOffset,
-                                (float) params.yOffset };
-                    } else {
-                        offset =
-                                new float[] {
-                                Math.round((float) params.xOffset),
-                                Math.round((float) params.yOffset) };
-                    }
-                } else {
-                    if (params.subpixelAccuracy) {
-                        offset =
-                                new float[] { (float) params.xOffset,
-                                (float) params.yOffset,
-                                (float) params.zOffset };
-                    } else {
-                        offset =
-                                new float[] {
-                                Math.round((float) params.xOffset),
-                                Math.round((float) params.yOffset),
-                                Math.round((float) params.zOffset) };
-                    }
-                }
-
-                result = new PairWiseStitchingResult(offset, 0.0f, 0.0f);
-                Log.info("shift (second relative to first): "
-                        + Util.printCoordinates(result.getOffset())
-                        + " (from dialog)");
-            }
-
-            for (int f = 1; f <= imp1.getNFrames(); ++f) {
-                if (params.dimensionality == 2) {
-                    final TranslationModel2D model1 = new TranslationModel2D();
-                    final TranslationModel2D model2 = new TranslationModel2D();
-                    model2.set(result.getOffset(0), result.getOffset(1));
-
-                    models.add(model1);
-                    models.add(model2);
-                } else {
-                    final TranslationModel3D model1 = new TranslationModel3D();
-                    final TranslationModel3D model2 = new TranslationModel3D();
-                    model2.set(result.getOffset(0), result.getOffset(1),
-                            result.getOffset(2));
-
-                    models.add(model1);
-                    models.add(model2);
-                }
+            // update the dialog to show the numbers next time
+            defaultxOffset = result.getOffset(0);
+            defaultyOffset = result.getOffset(1);
+            if (params.dimensionality == 3) {
+                defaultzOffset = result.getOffset(2);
             }
         } else {
-            // get all that we have to compare
-            final Vector<ComparePair> pairs =
-                    getComparePairs(imp1, imp2, params.dimensionality,
-                            params.timeSelect);
+            final float[] offset;
 
-            // compute all compare pairs
-            // compute all matchings
-            final AtomicInteger ai = new AtomicInteger(0);
-
-            final int numThreads;
-
-            if (params.cpuMemChoice == 0) {
-                numThreads = 1;
+            if (params.dimensionality == 2) {
+                if (params.subpixelAccuracy) {
+                    offset =
+                            new float[] { (float) params.xOffset,
+                                    (float) params.yOffset };
+                } else {
+                    offset =
+                            new float[] { Math.round((float) params.xOffset),
+                                    Math.round((float) params.yOffset) };
+                }
             } else {
-                numThreads = Runtime.getRuntime().availableProcessors();
+                if (params.subpixelAccuracy) {
+                    offset =
+                            new float[] { (float) params.xOffset,
+                                    (float) params.yOffset,
+                                    (float) params.zOffset };
+                } else {
+                    offset =
+                            new float[] { Math.round((float) params.xOffset),
+                                    Math.round((float) params.yOffset),
+                                    Math.round((float) params.zOffset) };
+                }
             }
 
-            final Thread[] threads =
-                    SimpleMultiThreading.newThreads(numThreads);
-
-            for (int ithread = 0; ithread < threads.length; ++ithread) {
-                threads[ithread] = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        final int myNumber = ai.getAndIncrement();
-
-                        for (int i = 0; i < pairs.size(); i++) {
-                            if (i % numThreads == myNumber) {
-                                final ComparePair pair = pairs.get(i);
-
-                                final long start = System.currentTimeMillis();
-
-                                final PairWiseStitchingResult result =
-                                        PairWiseStitchingImgLib.stitchPairwise(
-                                                pair.getImagePlus1(), pair
-                                                .getImagePlus2(), pair
-                                                .getImagePlus1()
-                                                .getRoi(), pair
-                                                .getImagePlus2()
-                                                .getRoi(), pair
-                                                .getTimePoint1(), pair
-                                                .getTimePoint2(),
-                                                params);
-
-                                if (params.dimensionality == 2) {
-                                    pair.setRelativeShift(new float[] {
-                                            result.getOffset(0),
-                                            result.getOffset(1) });
-                                } else {
-                                    pair.setRelativeShift(new float[] {
-                                            result.getOffset(0),
-                                            result.getOffset(1),
-                                            result.getOffset(2) });
-                                }
-
-                                pair.setCrossCorrelation(result
-                                        .getCrossCorrelation());
-
-                                Log.info(pair.getImagePlus1().getTitle()
-                                        + "["
-                                                + pair.getTimePoint1()
-                                                + "]"
-                                                + " <- "
-                                                + pair.getImagePlus2().getTitle()
-                                                + "["
-                                                + pair.getTimePoint2()
-                                                + "]"
-                                                + ": "
-                                                + Util.printCoordinates(result
-                                                        .getOffset())
-                                                        + " correlation (R)="
-                                                        + result.getCrossCorrelation() + " ("
-                                                        + (System.currentTimeMillis() - start)
-                                                        + " ms)");
-                            }
-                        }
-                    }
-                });
-            }
-
-            SimpleMultiThreading.startAndJoin(threads);
-
-            // get the final positions of all tiles
-            final ArrayList<ImagePlusTimePoint> optimized =
-                    GlobalOptimization.optimize(pairs, pairs.get(0).getTile1(),
-                            params);
-
-            for (int f = 0; f < imp1.getNFrames(); ++f) {
-                Log.info(optimized.get(f * 2).getImagePlus().getTitle() + "["
-                        + optimized.get(f * 2).getImpId() + ","
-                        + optimized.get(f * 2).getTimePoint() + "]: "
-                        + optimized.get(f * 2).getModel());
-                Log.info(optimized.get(f * 2 + 1).getImagePlus().getTitle()
-                        + "[" + optimized.get(f * 2 + 1).getImpId() + ","
-                        + optimized.get(f * 2 + 1).getTimePoint() + "]: "
-                        + optimized.get(f * 2 + 1).getModel());
-                models.add((InvertibleBoundable) optimized.get(f * 2)
-                        .getModel());
-                models.add((InvertibleBoundable) optimized.get(f * 2 + 1)
-                        .getModel());
-            }
-
+            result = new PairWiseStitchingResult(offset, 0.0f, 0.0f);
+            Log.info("shift (second relative to first): "
+                    + Util.printCoordinates(result.getOffset())
+                    + " (from dialog)");
         }
 
-        // now fuse
+        for (int f = 1; f <= imp1.getNFrames(); ++f) {
+            if (params.dimensionality == 2) {
+                final TranslationModel2D model1 = new TranslationModel2D();
+                final TranslationModel2D model2 = new TranslationModel2D();
+                model2.set(result.getOffset(0), result.getOffset(1));
+
+                models.add(model1);
+                models.add(model2);
+            } else {
+                final TranslationModel3D model1 = new TranslationModel3D();
+                final TranslationModel3D model2 = new TranslationModel3D();
+                model2.set(result.getOffset(0), result.getOffset(1),
+                        result.getOffset(2));
+
+                models.add(model1);
+                models.add(model2);
+            }
+        }
+    }
+
+    private static void multiTimepointStitching(final ImagePlus imp1,
+            final ImagePlus imp2, final StitchingParameters params,
+            final ArrayList<InvertibleBoundable> models) {
+        // get all that we have to compare
+        final List<ComparePair> pairs =
+                getComparePairs(imp1, imp2, params.dimensionality,
+                        params.timeSelect);
+
+        // compute all compare pairs
+        // compute all matchings
+        final AtomicInteger ai = new AtomicInteger(0);
+
+        final int numThreads;
+
+        if (params.cpuMemChoice == 0) {
+            numThreads = 1;
+        } else {
+            numThreads = Runtime.getRuntime().availableProcessors();
+        }
+
+        final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+
+        for (int ithread = 0; ithread < threads.length; ++ithread) {
+            threads[ithread] = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final int myNumber = ai.getAndIncrement();
+
+                    for (int i = 0; i < pairs.size(); i++) {
+                        if (i % numThreads == myNumber) {
+                            final ComparePair pair = pairs.get(i);
+
+                            final long start = System.currentTimeMillis();
+
+                            final PairWiseStitchingResult result =
+                                    PairWiseStitchingImgLib.stitchPairwise(pair
+                                            .getImagePlus1(), pair
+                                            .getImagePlus2(), pair
+                                            .getImagePlus1().getRoi(), pair
+                                            .getImagePlus2().getRoi(), pair
+                                            .getTimePoint1(), pair
+                                            .getTimePoint2(), params);
+
+                            if (params.dimensionality == 2) {
+                                pair.setRelativeShift(new float[] {
+                                        result.getOffset(0),
+                                        result.getOffset(1) });
+                            } else {
+                                pair.setRelativeShift(new float[] {
+                                        result.getOffset(0),
+                                        result.getOffset(1),
+                                        result.getOffset(2) });
+                            }
+
+                            pair.setCrossCorrelation(result
+                                    .getCrossCorrelation());
+
+                            Log.info(pair.getImagePlus1().getTitle() + "["
+                                    + pair.getTimePoint1() + "]" + " <- "
+                                    + pair.getImagePlus2().getTitle() + "["
+                                    + pair.getTimePoint2() + "]" + ": "
+                                    + Util.printCoordinates(result.getOffset())
+                                    + " correlation (R)="
+                                    + result.getCrossCorrelation() + " ("
+                                    + (System.currentTimeMillis() - start)
+                                    + " ms)");
+                        }
+                    }
+                }
+            });
+        }
+
+        SimpleMultiThreading.startAndJoin(threads);
+
+        // get the final positions of all tiles
+        final ArrayList<ImagePlusTimePoint> optimized =
+                GlobalOptimization.optimize(pairs, pairs.get(0).getTile1(),
+                        params);
+
+        for (int f = 0; f < imp1.getNFrames(); ++f) {
+            Log.info(optimized.get(f * 2).getImagePlus().getTitle() + "["
+                    + optimized.get(f * 2).getImpId() + ","
+                    + optimized.get(f * 2).getTimePoint() + "]: "
+                    + optimized.get(f * 2).getModel());
+            Log.info(optimized.get(f * 2 + 1).getImagePlus().getTitle() + "["
+                    + optimized.get(f * 2 + 1).getImpId() + ","
+                    + optimized.get(f * 2 + 1).getTimePoint() + "]: "
+                    + optimized.get(f * 2 + 1).getModel());
+            models.add((InvertibleBoundable) optimized.get(f * 2).getModel());
+            models.add((InvertibleBoundable) optimized.get(f * 2 + 1)
+                    .getModel());
+        }
+    }
+
+    /**
+     * Fuses an Image selecting the right parameters for
+     * {@link #fuse(RealType, ImagePlus, ImagePlus, ArrayList, StitchingParameters)}
+     * 
+     * @param imp1
+     * @param imp2
+     * @param params
+     * @param models
+     * @return
+     */
+    private static ImagePlus fuseImg(final ImagePlus imp1,
+            final ImagePlus imp2, final StitchingParameters params,
+            final ArrayList<InvertibleBoundable> models) {
         Log.info("Fusing ...");
 
-        final ImagePlus ci;
+        final ImagePlus resultImg;
         final long start = System.currentTimeMillis();
 
         if (imp1.getType() == ImagePlus.GRAY32
                 || imp2.getType() == ImagePlus.GRAY32) {
-            ci = fuse(new FloatType(), imp1, imp2, models, params);
+            resultImg = fuse(new FloatType(), imp1, imp2, models, params);
         } else if (imp1.getType() == ImagePlus.GRAY16
                 || imp2.getType() == ImagePlus.GRAY16) {
-            ci = fuse(new UnsignedShortType(), imp1, imp2, models, params);
+            resultImg =
+                    fuse(new UnsignedShortType(), imp1, imp2, models, params);
         } else {
-            ci = fuse(new UnsignedByteType(), imp1, imp2, models, params);
+            resultImg =
+                    fuse(new UnsignedByteType(), imp1, imp2, models, params);
         }
-
         Log.info("Finished ... (" + (System.currentTimeMillis() - start)
                 + " ms)");
-        return ci;
+        return resultImg;
     }
 
-    protected static <T extends RealType<T> & NativeType<T>> ImagePlus fuse(
+    private static <T extends RealType<T> & NativeType<T>> ImagePlus fuse(
             final T targetType, final ImagePlus imp1, final ImagePlus imp2,
             final ArrayList<InvertibleBoundable> models,
             final StitchingParameters params) {
@@ -286,14 +294,15 @@ public class Stitching_Pairwise implements PlugIn {
         images.add(imp1);
         images.add(imp2);
 
-        if (params.fusionMethod < 6) {
+        if (params.fusionMethod != FusionType.OVERLAY
+                || params.fusionMethod != FusionType.INTENSITY_RANDOM_TILE) {
             final ImagePlus imp =
                     Fusion.fuse(targetType, images, models,
                             params.dimensionality, params.subpixelAccuracy,
                             params.fusionMethod, null, false,
                             params.ignoreZeroValuesFusion, params.displayFusion);
             return imp;
-        } else if (params.fusionMethod == 6) // overlay
+        } else if (params.fusionMethod == FusionType.OVERLAY) // overlay
         {
             // images are always the same, we just trigger different timepoints
             final InterpolatorFactory<FloatType, RandomAccessible<FloatType>> factory;
@@ -351,7 +360,7 @@ public class Stitching_Pairwise implements PlugIn {
         }
     }
 
-    protected static Vector<ComparePair> getComparePairs(final ImagePlus imp1,
+    protected static List<ComparePair> getComparePairs(final ImagePlus imp1,
             final ImagePlus imp2, final int dimensionality, final int timeSelect) {
         final Model<?> model;
 
@@ -376,7 +385,7 @@ public class Stitching_Pairwise implements PlugIn {
                     .copy(), null));
         }
 
-        final Vector<ComparePair> pairs = new Vector<ComparePair>();
+        final List<ComparePair> pairs = new ArrayList<ComparePair>();
 
         // imp1 vs imp2 at all timepoints
         for (int timePointA = 1; timePointA <= Math.min(imp1.getNFrames(),

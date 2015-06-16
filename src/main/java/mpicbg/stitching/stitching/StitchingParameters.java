@@ -2,8 +2,10 @@ package mpicbg.stitching.stitching;
 
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.stitching.math.CommonFunctions.FusionType;
 
 public class StitchingParameters {
+
     /**
      * If we cannot wrap, which factory do we use for computing the phase
      * correlation
@@ -18,13 +20,13 @@ public class StitchingParameters {
     public static boolean alwaysCopy = false;
 
     public int dimensionality;
-    public int fusionMethod;
+    public FusionType fusionMethod;
     public String fusedName;
     public int checkPeaks;
     public boolean addTilesAsRois;
     public boolean computeOverlap, subpixelAccuracy,
-    ignoreZeroValuesFusion = false, downSample = false,
-    displayFusion = false;
+            ignoreZeroValuesFusion = false, downSample = false,
+            displayFusion = false;
     public boolean invertX, invertY;
     public boolean ignoreZStage;
     public double xOffset;

@@ -2,6 +2,7 @@ package mpicbg.stitching.stitching;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -16,7 +17,7 @@ public class GlobalOptimization {
     public static boolean ignoreZ = false;
 
     public static ArrayList<ImagePlusTimePoint> optimize(
-            final Vector<ComparePair> pairs,
+            final List<ComparePair> pairs,
             final ImagePlusTimePoint fixedImage,
             final StitchingParameters params) {
         boolean redo;

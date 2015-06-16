@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.NoninvertibleModelException;
+import mpicbg.stitching.math.CommonFunctions.FusionType;
 import mpicbg.stitching.utils.CompositeImageFixer;
 import mpicbg.stitching.utils.Log;
 import net.imglib2.Cursor;
@@ -69,7 +70,7 @@ public class Fusion {
             final T targetType, final ArrayList<ImagePlus> images,
             final ArrayList<InvertibleBoundable> models,
             final int dimensionality, final boolean subpixelResolution,
-            final int fusionType, final String outputDirectory,
+            final FusionType fusionType, final String outputDirectory,
             final boolean noOverlap, final boolean ignoreZeroValues,
             final boolean displayImages) {
         // first we need to estimate the boundaries of the new image
@@ -122,32 +123,47 @@ public class Fusion {
                 // init the fusion
                 PixelFusion fusion = null;
 
-                if (fusionType == 1) {
+                switch (fusionType) {
+                case LINEAR_BLENDING:
                     if (ignoreZeroValues) {
                         fusion = new AveragePixelFusionIgnoreZero();
                     } else {
                         fusion = new AveragePixelFusion();
                     }
-                } else if (fusionType == 2) {
+                    break;
+                case AVERAGE:
                     if (ignoreZeroValues) {
                         fusion = new MedianPixelFusionIgnoreZero();
                     } else {
                         fusion = new MedianPixelFusion();
                     }
-                } else if (fusionType == 3) {
+                    break;
+                case MEDIAN:
                     if (ignoreZeroValues) {
                         fusion = new MaxPixelFusionIgnoreZero();
                     } else {
                         fusion = new MaxPixelFusion();
                     }
-                } else if (fusionType == 4) {
+                    break;
+                case MAX_INTENSITY:
                     if (ignoreZeroValues) {
                         fusion = new MinPixelFusionIgnoreZero();
                     } else {
                         fusion = new MinPixelFusion();
                     }
-                } else if (fusionType == 5) {
+                    break;
+                case MIN_INTENSITY:
                     fusion = new OverlapFusion();
+                    break;
+                case INTENSITY_RANDOM_TILE:
+                    break;
+                case NO_FUSE:
+                    break;
+                case OVERLAY:
+                    break;
+                default:
+                    throw new IllegalStateException(
+                            "This case was not considered !!!");
                 }
 
                 // extract the complete blockdata
@@ -165,13 +181,13 @@ public class Fusion {
                     for (final ImagePlus imp : images) {
                         blockData.add(new ImageInterpolation<FloatType>(
                                 ImageJFunctions
-                                .convertFloat(Hyperstack_rearranger
-                                        .getImageChunk(imp, c, t)),
-                                        interpolatorFactory, true));
+                                        .convertFloat(Hyperstack_rearranger
+                                                .getImageChunk(imp, c, t)),
+                                interpolatorFactory, true));
                     }
 
                     // init blending with the images
-                    if (fusionType == 0) {
+                    if (fusionType == FusionType.LINEAR_BLENDING) {
                         if (ignoreZeroValues) {
                             fusion =
                                     new BlendingPixelFusionIgnoreZero(blockData);
@@ -218,30 +234,30 @@ public class Fusion {
                         if (imp.getType() == ImagePlus.GRAY32) {
                             blockData.add(new ImageInterpolation<FloatType>(
                                     ImageJFunctions
-                                    .wrapFloat(Hyperstack_rearranger
-                                            .getImageChunk(imp, c, t)),
-                                            interpolatorFactoryFloat, false));
+                                            .wrapFloat(Hyperstack_rearranger
+                                                    .getImageChunk(imp, c, t)),
+                                    interpolatorFactoryFloat, false));
                         } else if (imp.getType() == ImagePlus.GRAY16) {
                             blockData
-                            .add(new ImageInterpolation<UnsignedShortType>(
-                                    ImageJFunctions
-                                    .wrapShort(Hyperstack_rearranger
-                                            .getImageChunk(imp,
-                                                    c, t)),
-                                                    interpolatorFactoryShort, false));
+                                    .add(new ImageInterpolation<UnsignedShortType>(
+                                            ImageJFunctions
+                                                    .wrapShort(Hyperstack_rearranger
+                                                            .getImageChunk(imp,
+                                                                    c, t)),
+                                            interpolatorFactoryShort, false));
                         } else {
                             blockData
-                            .add(new ImageInterpolation<UnsignedByteType>(
-                                    ImageJFunctions
-                                    .wrapByte(Hyperstack_rearranger
-                                            .getImageChunk(imp,
-                                                    c, t)),
-                                                    interpolatorFactoryByte, false));
+                                    .add(new ImageInterpolation<UnsignedByteType>(
+                                            ImageJFunctions
+                                                    .wrapByte(Hyperstack_rearranger
+                                                            .getImageChunk(imp,
+                                                                    c, t)),
+                                            interpolatorFactoryByte, false));
                         }
                     }
 
                     // init blending with the images
-                    if (fusionType == 0) {
+                    if (fusionType == FusionType.LINEAR_BLENDING) {
                         if (ignoreZeroValues) {
                             fusion =
                                     new BlendingPixelFusionIgnoreZero(blockData);
@@ -335,9 +351,9 @@ public class Fusion {
     protected static <T extends RealType<T>> void fuseBlock(
             final Img<T> output,
             final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                    final double[] offset,
-                    final ArrayList<InvertibleBoundable> transform,
-                    final PixelFusion fusion, final boolean displayFusion) {
+            final double[] offset,
+            final ArrayList<InvertibleBoundable> transform,
+            final PixelFusion fusion, final boolean displayFusion) {
         final int numDimensions = output.numDimensions();
         final int numImages = input.size();
         long size = output.dimension(0);
@@ -409,7 +425,7 @@ public class Fusion {
             for (int d = 0; d < currentTile[0].size(); d++) {
                 final int tmpSize =
                         currentTile[0].get(d).max()
-                        - currentTile[0].get(d).min() + 1;
+                                - currentTile[0].get(d).min() + 1;
                 if (tmpSize > dimensionSize) {
                     dimensionSize = tmpSize;
                     loopDim[0] = d;
@@ -442,7 +458,7 @@ public class Fusion {
             final int numDimensions,
             final ArrayList<InvertibleBoundable> transform,
             final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                    final double[] offset) {
+            final double[] offset) {
         final Stack<ClassifiedRegion> rawTiles = new Stack<ClassifiedRegion>();
 
         for (int i = 0; i < numImages; ++i) {
@@ -552,13 +568,13 @@ public class Fusion {
                     // Single point shares edge
                     intervals.add(new Interval(points.get(0)));
                     intervals
-                    .add(new Interval(points.get(0) + 1, points.get(3)));
+                            .add(new Interval(points.get(0) + 1, points.get(3)));
                 } else {
                     // Overlap at first point, other two are unique (partial
                     // overlap with shared edge)
                     intervals.add(new Interval(points.get(0), points.get(2)));
                     intervals
-                    .add(new Interval(points.get(2) + 1, points.get(3)));
+                            .add(new Interval(points.get(2) + 1, points.get(3)));
                 }
             } else if (points.get(1).equals(points.get(2))) {
                 if (points.get(2).equals(points.get(3))) {
@@ -566,14 +582,14 @@ public class Fusion {
                     // point shares edge
                     intervals.add(new Interval(points.get(3)));
                     intervals
-                    .add(new Interval(points.get(0), points.get(3) - 1));
+                            .add(new Interval(points.get(0), points.get(3) - 1));
                 } else {
                     // Mid 2 points are equal. Two distinct tiles share an edge.
                     intervals
-                    .add(new Interval(points.get(0), points.get(1) - 1));
+                            .add(new Interval(points.get(0), points.get(1) - 1));
                     intervals.add(new Interval(points.get(1)));
                     intervals
-                    .add(new Interval(points.get(1) + 1, points.get(3)));
+                            .add(new Interval(points.get(1) + 1, points.get(3)));
                 }
             } else if (points.get(2).equals(points.get(3))) {
                 // Last 2 points are equal, other two are unique (partial
@@ -605,7 +621,7 @@ public class Fusion {
      * allow one to be created per thread, then have values modified externally.
      */
     private static class TileProcessor<T extends RealType<T>> implements
-    Runnable {
+            Runnable {
 
         private int loopOffset;
         private int loopSize;
@@ -629,11 +645,11 @@ public class Fusion {
                 final int threadNumber,
                 final List<ArrayList<RealRandomAccess<? extends RealType<?>>>> interpolators,
                 final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                        final Vector<Chunk> threadChunks, final int numImages,
+                final Vector<Chunk> threadChunks, final int numImages,
                 final Img<T> output, final PixelFusion fusion,
                 final ClassifiedRegion[] currentTile,
-                        final ArrayList<InvertibleBoundable> transform,
-                        final ImagePlus[] fusionImp, final int[] count,
+                final ArrayList<InvertibleBoundable> transform,
+                final ImagePlus[] fusionImp, final int[] count,
                 final double positionsPerThread, final double[] offset,
                 final int[] loopDim) {
             this.threadNumber = threadNumber;
@@ -685,7 +701,7 @@ public class Fusion {
                 final List<ArrayList<RealRandomAccess<? extends RealType<?>>>> interpolators,
                 final int threadNumber,
                 final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                        final int numImages) {
+                final int numImages) {
             ArrayList<RealRandomAccess<? extends RealType<?>>> in = null;
             if (threadNumber >= interpolators.size()) {
                 in = new ArrayList<RealRandomAccess<? extends RealType<?>>>();
@@ -710,7 +726,7 @@ public class Fusion {
                 final RandomAccess<T> out, final double[][] inPos,
                 final int threadNumber, final int[] count,
                 final long[] lastDraw, final ImagePlus fusionImp)
-                        throws NoninvertibleModelException {
+                throws NoninvertibleModelException {
             processTile(r, r.classArray(), depth, myFusion, transform, in, out,
                     inPos, threadNumber, count, lastDraw, fusionImp);
         }
@@ -730,7 +746,7 @@ public class Fusion {
                 final RandomAccess<T> out, final double[][] inPos,
                 final int threadNumber, final int[] count,
                 final long[] lastDraw, final ImagePlus fusionImp)
-                        throws NoninvertibleModelException {
+                throws NoninvertibleModelException {
             // NB: there are two process tile methods, one for in-memory fusion
             // and one for writing to disk. They are slightly different, but
             // if one is updated the other should be as well!
@@ -857,10 +873,10 @@ public class Fusion {
             // otherwise it is invalid.
             inQuery =
                     inQuery && queryIval.contains(newIval.min()) == 0
-                    && queryIval.contains(newIval.max()) == 0;
+                            && queryIval.contains(newIval.max()) == 0;
             inPlaced =
                     inPlaced && placedIval.contains(newIval.min()) == 0
-                    && placedIval.contains(newIval.max()) == 0;
+                            && placedIval.contains(newIval.max()) == 0;
             validIval = inQuery || inPlaced;
         }
 
@@ -891,9 +907,9 @@ public class Fusion {
     protected static <T extends RealType<T>> void fuseBlockNoOverlap(
             final Img<T> output,
             final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                    final double[] offset,
-                    final ArrayList<InvertibleBoundable> transform,
-                    final boolean displayFusion) {
+            final double[] offset,
+            final ArrayList<InvertibleBoundable> transform,
+            final boolean displayFusion) {
         final int numDimensions = output.numDimensions();
         final int numImages = input.size();
 
@@ -918,7 +934,7 @@ public class Fusion {
                         try {
                             fusionImp =
                                     ((ImagePlusImg<?, ?>) output)
-                                    .getImagePlus();
+                                            .getImagePlus();
                             fusionImp.setTitle("fusing...");
                             fusionImp.show();
                         } catch (final ImgLibException e) {
@@ -997,9 +1013,9 @@ public class Fusion {
             final int c,
             final int numChannels,
             final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                    final double[] offset,
-                    final ArrayList<InvertibleBoundable> transform,
-                    final PixelFusion fusion, final String outputDirectory) {
+            final double[] offset,
+            final ArrayList<InvertibleBoundable> transform,
+            final PixelFusion fusion, final String outputDirectory) {
         final int numImages = input.size();
         final int numDimensions = offset.length;
 
@@ -1045,7 +1061,7 @@ public class Fusion {
                 fs.saveAsTiff(new File(outputDirectory, "img_t"
                         + lz(t, numTimePoints) + "_z"
                         + lz(slice + 1, numSlices) + "_c" + lz(c, numChannels))
-                .getAbsolutePath());
+                        .getAbsolutePath());
             }
         } catch (final NoninvertibleModelException e) {
             Log.error("Cannot invert model, qutting.");
@@ -1072,7 +1088,7 @@ public class Fusion {
             final ArrayList<RealRandomAccess<? extends RealType<?>>> in,
             final RandomAccess<T> out, final double[][] inPos,
             final int[] count, final long sliceSize, final int numSlices)
-                    throws NoninvertibleModelException {
+            throws NoninvertibleModelException {
         // NB: there are two process tile methods, one for in-memory fusion
         // and one for writing to disk. They are slightly different, but
         // if one is updated the other should be as well!
@@ -1237,14 +1253,14 @@ public class Fusion {
             for (int i = 0; i < numImages * numTimePoints; ++i) {
                 max[i] =
                         new double[] { imgSizes[i % numImages][0],
-                        imgSizes[i % numImages][1] };
+                                imgSizes[i % numImages][1] };
             }
         } else {
             for (int i = 0; i < numImages * numTimePoints; ++i) {
                 max[i] =
                         new double[] { imgSizes[i % numImages][0],
-                        imgSizes[i % numImages][1],
-                        imgSizes[i % numImages][2] };
+                                imgSizes[i % numImages][1],
+                                imgSizes[i % numImages][2] };
             }
         }
 
