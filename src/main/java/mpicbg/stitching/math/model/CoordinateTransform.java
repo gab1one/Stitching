@@ -36,7 +36,6 @@ public interface CoordinateTransform {
      * Apply the {@link CoordinateTransform} to a location.
      *
      * @param location
-     * @return transformed location
      */
     abstract public void applyInPlace(float[] location);
 }

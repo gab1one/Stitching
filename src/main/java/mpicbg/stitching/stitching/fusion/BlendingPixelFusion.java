@@ -98,9 +98,8 @@ public class BlendingPixelFusion implements PixelFusion {
      * @param location
      * @param dimensions
      * @param border
-     * @param dimensionScaling
      * @param percentScaling
-     * @return
+     * @return the weight
      */
     final public static double computeWeight(final double[] location,
             final long[] dimensions, final double[] border,

@@ -32,7 +32,7 @@ import mpicbg.stitching.math.OverlapProperties;
  * A link between two {@link Point Points} that are expected to be ideally at
  * the same location in the world coordinate space.
  *
- * The link is directed, such that each link touches only {@link #p1}.
+ * The link is directed, such that each link touches only p1.
  *
  */
 public class PointMatch {
@@ -93,8 +93,8 @@ public class PointMatch {
      * Create a {@link PointMatch} with an Array of weights and a strength. The
      * Array of weights will be copied.
      *
-     * Strength gives the amount of application: strength = 0 means {@link #p1}
-     * will not be transferred, strength = 1 means {@link #p1} will be fully
+     * Strength gives the amount of application: strength = 0 means p1
+     * will not be transferred, strength = 1 means p1 will be fully
      * transferred
      *
      * @param p1
@@ -105,7 +105,7 @@ public class PointMatch {
      *            Array of weights
      * @param strength
      *            how much should {@link #applyByStrength(Model, float)} affect
-     *            {@link #p1}
+     *            p1
      */
     public PointMatch(final Point p1, final Point p2, final float[] weights,
             final float strength) {
@@ -182,8 +182,8 @@ public class PointMatch {
      *
      * Create a {@link PointMatch} with one weight and strength.
      *
-     * Strength gives the amount of application: strength = 0 means {@link #p1}
-     * will not be transferred, strength = 1 means {@link #p1} will be fully
+     * Strength gives the amount of application: strength = 0 means p1
+     * will not be transferred, strength = 1 means p1 will be fully
      * transferred
      *
      * @param p1
@@ -194,7 +194,7 @@ public class PointMatch {
      *            Weight
      * @param strength
      *            how much should {@link #applyByStrength(Model, float)} affect
-     *            {@link #p1}
+     *           p1
      */
     public PointMatch(final Point p1, final Point p2, final float weight,
             final float strength) {
@@ -218,8 +218,6 @@ public class PointMatch {
      *            Point 1
      * @param p2
      *            Point 2
-     * @param weights
-     *            Weight
      */
     public PointMatch(final Point p1, final Point p2) {
         this.p1 = p1;
@@ -231,7 +229,7 @@ public class PointMatch {
     }
 
     /**
-     * Apply a {@link Model} to {@link #p1}, update distance.
+     * Apply a {@link Model} to p1, update distance.
      *
      * @param model
      */
@@ -241,7 +239,7 @@ public class PointMatch {
     }
 
     /**
-     * Apply a {@link Model} to {@link #p1} with a given amount, update
+     * Apply a {@link Model} to p1 with a given amount, update
      * distance.
      *
      * @param model
@@ -256,7 +254,7 @@ public class PointMatch {
      * Flip symmetrically, weights remains unchanged.
      *
      * @param matches
-     * @return
+     * @return list flipped matches
      */
     final public static ArrayList<PointMatch> flip(
             final Collection<PointMatch> matches) {

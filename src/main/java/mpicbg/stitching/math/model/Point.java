@@ -26,8 +26,8 @@ package mpicbg.stitching.math.model;
 /**
  * An n-dimensional point.
  *
- * {@link #l Local coordinates} are thought to be immutable, application of a
- * model changes the {@link #w world coordinates} of the point.
+ * local coordinates are thought to be immutable, application of a model changes
+ * the world coordinates of the point.
  */
 public class Point {
     /**
@@ -51,7 +51,7 @@ public class Point {
     /**
      * Constructor
      *
-     * Sets {@link #l} to the given float[] reference.
+     * Sets member l to the given float[] reference.
      *
      * @param l
      *            reference to the local coordinates of the {@link Point}
@@ -64,8 +64,7 @@ public class Point {
     /**
      * Apply a {@link Model} to the {@link Point}.
      *
-     * Transfers the {@link #l local coordinates} to new {@link #w world
-     * coordinates}.
+     * Transfers the local coordinates to new world coordinates}.
      *
      * @param model
      */
@@ -77,8 +76,7 @@ public class Point {
     /**
      * Apply a {@link Model} to the {@link Point} by a given amount.
      *
-     * Transfers the {@link #l local coordinates} to new {@link #w world
-     * coordinates}.
+     * Transfers the local coordinates to new world coordinates}.
      *
      * @param model
      * @param amount
@@ -94,8 +92,7 @@ public class Point {
     /**
      * Apply the inverse of a {@link InvertibleModel} to the {@link Point}.
      *
-     * Transfers the {@link #l local coordinates} to new {@link #w world
-     * coordinates}.
+     * Transfers the local coordinates to new world coordinates}.
      *
      * @param model
      */

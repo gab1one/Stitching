@@ -153,8 +153,7 @@ public abstract class Model implements CoordinateTransform {
      *
      * @param matches
      *            set of point correpondences
-     * @throws an
-     *             exception if matches does not contain enough data points
+     * @throws NotEnoughDataPointsException if matches does not contain enough data points
      */
     abstract public void fit(Collection<PointMatch> matches)
             throws NotEnoughDataPointsException;
@@ -172,7 +171,7 @@ public abstract class Model implements CoordinateTransform {
      *            set of point correspondences that fit the model
      * @param epsilon
      *            maximal allowed transfer error
-     * @param min_inliers
+     * @param min_inlier_ratio
      *            minimal ratio of inliers (0.0 => 0%, 1.0 => 100%)
      */
     final static public boolean test(final Model model,
@@ -200,7 +199,7 @@ public abstract class Model implements CoordinateTransform {
      *
      * This method performs well on data sets with low amount of outliers. If
      * you have many outliers, you can filter those with a `tolerant' RANSAC
-     * first as done in {@link #filterRansac() filterRansac}.
+     * first as done in {@link #filterRansac(Class, List, Collection, int, float, float)}.
      *
      * @param modelClass
      *            Class of the model to be estimated
@@ -213,7 +212,7 @@ public abstract class Model implements CoordinateTransform {
     final static public <M extends Model> M filter(final Class<M> modelClass,
             final Collection<PointMatch> candidates,
             final Collection<PointMatch> inliers)
-                    throws NotEnoughDataPointsException {
+            throws NotEnoughDataPointsException {
         M model;
         try {
             model = modelClass.newInstance();
@@ -266,7 +265,7 @@ public abstract class Model implements CoordinateTransform {
      *
      * This method performs well on data sets with low amount of outliers. If
      * you have many outliers, you can filter those with a `tolerant' RANSAC
-     * first as done in {@link #filterRansac() filterRansac}.
+     * first as done in {@link #filterRansac(Class, List, Collection, int, float, float)}.
      *
      * @param modelClass
      *            Class of the model to be estimated
@@ -285,7 +284,7 @@ public abstract class Model implements CoordinateTransform {
             final List<PointMatch> candidates,
             final Collection<PointMatch> inliers, final int iterations,
             final double epsilon, final double min_inlier_ratio)
-                    throws NotEnoughDataPointsException {
+            throws NotEnoughDataPointsException {
         M model;
         try {
             model = modelClass.newInstance();
@@ -301,8 +300,8 @@ public abstract class Model implements CoordinateTransform {
         if (candidates.size() < MIN_SET_SIZE) {
             throw new NotEnoughDataPointsException(
                     candidates.size()
-                    + " correspondences are not enough to estimate a model, at least "
-                    + MIN_SET_SIZE + " correspondences required.");
+                            + " correspondences are not enough to estimate a model, at least "
+                            + MIN_SET_SIZE + " correspondences required.");
         }
 
         int i = 0;
@@ -369,7 +368,7 @@ public abstract class Model implements CoordinateTransform {
             final List<PointMatch> candidates,
             final Collection<PointMatch> inliers, final int iterations,
             final float max_epsilon, final float min_inlier_ratio)
-                    throws NotEnoughDataPointsException {
+            throws NotEnoughDataPointsException {
         final ArrayList<PointMatch> temp = new ArrayList<PointMatch>();
         ransac(modelType, candidates, temp, iterations, max_epsilon,
                 min_inlier_ratio);

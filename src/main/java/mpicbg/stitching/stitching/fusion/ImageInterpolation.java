@@ -1,5 +1,7 @@
 package mpicbg.stitching.stitching.fusion;
 
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.interpolation.Interpolator;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;

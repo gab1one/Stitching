@@ -364,7 +364,7 @@ public class Tile {
      * Identify the set of connected graphs that contains all given tiles.
      *
      * @param tiles
-     * @return
+     * @return set of connected graphs
      */
     final static public ArrayList<ArrayList<Tile>> identifyConnectedGraphs(
             final Collection<Tile> tiles) {

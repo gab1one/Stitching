@@ -139,7 +139,7 @@ public class TileConfiguration {
     /**
      * Minimize the displacement of all correspondence pairs of all tiles.
      *
-     * @param maxError
+     * @param maxAllowedError
      *            do not accept convergence if error is > max_error
      * @param maxIterations
      *            stop after that many iterations even if there was no minimum

@@ -632,8 +632,6 @@ public class PairWiseStitchingImgLib {
      * PhaseCorrelation. If no rectangular roi is selected, it will only wrap
      * the existing ImagePlus!
      *
-     * @param targetType
-     *            - which {@link RealType}
      * @param channel
      *            - which channel (if channel=0 means average all channels)
      * @param timepoint
@@ -658,8 +656,6 @@ public class PairWiseStitchingImgLib {
      * PhaseCorrelation. If no rectangular roi is selected, it will only wrap
      * the existing ImagePlus!
      *
-     * @param targetType
-     *            - which {@link RealType}
      * @param channel
      *            - which channel (if channel=0 means average all channels)
      * @param timepoint
@@ -684,8 +680,6 @@ public class PairWiseStitchingImgLib {
      * PhaseCorrelation. If no rectangular roi is selected, it will only wrap
      * the existing ImagePlus!
      *
-     * @param targetType
-     *            - which {@link RealType}
      * @param channel
      *            - which channel (if channel=0 means average all channels)
      * @param timepoint
