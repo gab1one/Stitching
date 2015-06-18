@@ -1,12 +1,9 @@
 package mpicbg.stitching.plugin;
 
-import static mpicbg.stitching.math.CommonFunctions.addHyperLinkListener;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.MultiLineLabel;
 import ij.gui.Roi;
-import ij.gui.Toolbar;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 
@@ -31,22 +28,14 @@ import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
-import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.stitching.math.CommonFunctions;
-import mpicbg.stitching.stitching.CollectionStitchingImgLib;
 import mpicbg.stitching.stitching.Downsampler;
 import mpicbg.stitching.stitching.ImageCollectionElement;
 import mpicbg.stitching.stitching.ImagePlusTimePoint;
-import mpicbg.stitching.stitching.StitchingParameters;
 import mpicbg.stitching.stitching.TextFileAccess;
-import mpicbg.stitching.stitching.fusion.Fusion;
 import mpicbg.stitching.utils.Log;
-import mpicbg.stitching.utils.RoiPicker;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import ome.units.quantity.Length;
 
 /**

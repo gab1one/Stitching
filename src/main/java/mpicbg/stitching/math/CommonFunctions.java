@@ -50,61 +50,49 @@ import edu.mines.jtk.dsp.FftComplex;
 import edu.mines.jtk.dsp.FftReal;
 
 public class CommonFunctions {
-    
-    public enum FusionType {
-        OVERLAY("Overlay into Composite Image"), LINEAR_BLENDING(
-                "Linear Blending"), AVERAGE("Average Intensity"), MEDIAN(
-                "Median Intensity"), MAX_INTENSITY("Max Intensity"),
-        MIN_INTENSITY("Min Intensity"), INTENSITY_RANDOM_TILE(
-                "Intensity of Random Input Tile"),
-        NO_FUSE("Do not fuse Images");
 
-        final String name;
-
-        FusionType(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-
+   public static class FusionType {
+        public static final String OVERLAY = "Overlay into Composite Image";
+        public static final String LINEAR_BLENDING = "Linear Blending";
+        public static final String AVERAGE = "Average Intensity";
+        public static final String MEDIAN = "Median Intensity";
+        public static final String MAX_INTENSITY = "Max Intensity";
+        public static final String MIN_INTENSITY = "Min Intensity";
+        public static final String INTENSITY_RANDOM_TILE =
+                "Intensity of Random Input Tile";
+        public static final String NO_FUSE = "Do not fuse Images";
     }
-    
-    public static String[] fusionMethodList = { "Linear Blending", "Average",
-        "Median", "Max. Intensity", "Min. Intensity",
-        "Intensity of random input tile", "Overlay into composite image",
-    "Do not fuse images" };
-    public static String[] fusionMethodListSimple = {
-        "Overlay into composite image", "Do not fuse images" };
-    public static String[] fusionMethodListGrid = { "Linear Blending",
-        "Average", "Median", "Max. Intensity", "Min. Intensity",
-        "Intensity of random input tile", /* "Overlay into composite image", */
-    "Do not fuse images (only write TileConfiguration)" };
-    
 
-    
-    
+    public static String[] fusionMethodList = { "Linear Blending", "Average",
+            "Median", "Max. Intensity", "Min. Intensity",
+            "Intensity of random input tile", "Overlay into composite image",
+            "Do not fuse images" };
+    public static String[] fusionMethodListSimple = {
+            "Overlay into composite image", "Do not fuse images" };
+    public static String[] fusionMethodListGrid = { "Linear Blending",
+            "Average", "Median", "Max. Intensity", "Min. Intensity",
+            "Intensity of random input tile", /* "Overlay into composite image", */
+            "Do not fuse images (only write TileConfiguration)" };
+
     public static String[] methodList = { "Average", "Linear Blending",
-        "Max. Intensity", "Min. Intensity", "Red-Cyan Overlay" };
+            "Max. Intensity", "Min. Intensity", "Red-Cyan Overlay" };
     public final static int AVG = 0, LIN_BLEND = 1, MAX = 2, MIN = 3,
             RED_CYAN = 4, NONE = 5;
 
     public static String[] methodListCollection = { "Average",
-        "Linear Blending", "Max. Intensity", "Min. Intensity", "None" };
+            "Linear Blending", "Max. Intensity", "Min. Intensity", "None" };
     public static String[] rgbTypes = { "rgb", "rbg", "grb", "gbr", "brg",
-    "bgr" };
+            "bgr" };
     public static String[] colorList = { "Red", "Green", "Blue",
-        "Red and Green", "Red and Blue", "Green and Blue",
-    "Red, Green and Blue" };
+            "Red and Green", "Red and Blue", "Green and Blue",
+            "Red, Green and Blue" };
 
     public static String[] timeSelect = {
-        "Apply registration of first time-point to all other time-points",
-        "Register images adjacently over time",
-    "Register all images over all time-points globally (expensive!)" };
+            "Apply registration of first time-point to all other time-points",
+            "Register images adjacently over time",
+            "Register all images over all time-points globally (expensive!)" };
     public static String[] cpuMemSelect = { "Save memory (but be slower)",
-    "Save computation time (but use more RAM)" };
+            "Save computation time (but use more RAM)" };
 
     public static ImagePlus loadImage(final String directory,
             final String file, final int seriesNumber) {
@@ -374,26 +362,26 @@ public class CommonFunctions {
     public static float getPixelValueRGB(final int rgb, final int rgbType) {
         final int r = (rgb & 0xff0000) >> 16;
         final int g = (rgb & 0xff00) >> 8;
-                                final int b = rgb & 0xff;
+        final int b = rgb & 0xff;
 
-                                // colorList = {"Red", "Green", "Blue", "Red and Green", "Red and Blue",
-                                // "Green and Blue", "Red, Green and Blue"};
+        // colorList = {"Red", "Green", "Blue", "Red and Green", "Red and Blue",
+        // "Green and Blue", "Red, Green and Blue"};
 
-                                if (rgbType == 0) {
-                                    return r;
-                                } else if (rgbType == 1) {
-                                    return g;
-                                } else if (rgbType == 2) {
-                                    return b;
-                                } else if (rgbType == 3) {
-                                    return (r + g) / 2.0f;
-                                } else if (rgbType == 4) {
-                                    return (r + b) / 2.0f;
-                                } else if (rgbType == 5) {
-                                    return (g + b) / 2.0f;
-                                } else {
-                                    return (r + g + b) / 3.0f;
-                                }
+        if (rgbType == 0) {
+            return r;
+        } else if (rgbType == 1) {
+            return g;
+        } else if (rgbType == 2) {
+            return b;
+        } else if (rgbType == 3) {
+            return (r + g) / 2.0f;
+        } else if (rgbType == 4) {
+            return (r + b) / 2.0f;
+        } else if (rgbType == 5) {
+            return (g + b) / 2.0f;
+        } else {
+            return (r + g + b) / 3.0f;
+        }
     }
 
     public static FloatArray3D zeroPad(final FloatArray3D ip, final int width,
@@ -1141,7 +1129,7 @@ public class CommonFunctions {
         final int color = (pixelTmp[x + y * width] & 0xffffff);
 
         rgb[0] = (color & 0xff0000) >> 16;
-            rgb[1] = (color & 0xff00) >> 8;
+        rgb[1] = (color & 0xff00) >> 8;
         rgb[2] = color & 0xff;
 
         return rgb;
@@ -1162,7 +1150,7 @@ public class CommonFunctions {
             final short[] pixelTmp = (short[]) imageStack[z];
             return pixelTmp[x + y * width] & 0xffff;
         } else
-            // instance of float[]
+        // instance of float[]
         {
             final float[] pixelTmp = (float[]) imageStack[z];
             return pixelTmp[x + y * width];
@@ -1196,39 +1184,39 @@ public class CommonFunctions {
         // convert reader index to plane element index
         final int planeIndex =
                 planeMap.containsKey(index) ? planeMap.get(index) : 0;
-                final boolean hasPlane = planeIndex < retrieve.getPlaneCount(series);
+        final boolean hasPlane = planeIndex < retrieve.getPlaneCount(series);
 
-                // CTR HACK: Recover gracefully when StageLabel element is missing.
-                // This avoids a problem with the OMEXMLMetadataImpl implementation,
-                // which currently does not check for null on the StageLabel object.
-                Length stageLabelX = null, stageLabelY = null, stageLabelZ = null;
-                try {
-                    stageLabelX = retrieve.getStageLabelX(series);
-                    stageLabelY = retrieve.getStageLabelY(series);
-                    stageLabelZ = retrieve.getStageLabelZ(series);
-                } catch (final NullPointerException exc) {
-                    // ignore
-                }
+        // CTR HACK: Recover gracefully when StageLabel element is missing.
+        // This avoids a problem with the OMEXMLMetadataImpl implementation,
+        // which currently does not check for null on the StageLabel object.
+        Length stageLabelX = null, stageLabelY = null, stageLabelZ = null;
+        try {
+            stageLabelX = retrieve.getStageLabelX(series);
+            stageLabelY = retrieve.getStageLabelY(series);
+            stageLabelZ = retrieve.getStageLabelZ(series);
+        } catch (final NullPointerException exc) {
+            // ignore
+        }
 
-                // stage coordinates (for the given series and plane)
-                final double locationX =
-                        getPosition(
-                                hasPlane ? retrieve.getPlanePositionX(series,
-                                        planeIndex) : null, stageLabelX, invertX);
-                final double locationY =
-                        getPosition(
-                                hasPlane ? retrieve.getPlanePositionY(series,
-                                        planeIndex) : null, stageLabelY, invertY);
-                final double locationZ =
-                        ignoreZStage ? 0 : getPosition(
-                                hasPlane ? retrieve.getPlanePositionZ(series,
-                                        planeIndex) : null, stageLabelZ, false);
+        // stage coordinates (for the given series and plane)
+        final double locationX =
+                getPosition(
+                        hasPlane ? retrieve.getPlanePositionX(series,
+                                planeIndex) : null, stageLabelX, invertX);
+        final double locationY =
+                getPosition(
+                        hasPlane ? retrieve.getPlanePositionY(series,
+                                planeIndex) : null, stageLabelY, invertY);
+        final double locationZ =
+                ignoreZStage ? 0 : getPosition(
+                        hasPlane ? retrieve.getPlanePositionZ(series,
+                                planeIndex) : null, stageLabelZ, false);
 
-                Log.debug("locationX:  " + locationX);
-                Log.debug("locationY:  " + locationY);
-                Log.debug("locationZ:  " + locationZ);
+        Log.debug("locationX:  " + locationX);
+        Log.debug("locationY:  " + locationY);
+        Log.debug("locationZ:  " + locationZ);
 
-                return new double[] { locationX, locationY, locationZ };
+        return new double[] { locationX, locationY, locationZ };
     }
 
     private static double getPosition(final Length planePos,

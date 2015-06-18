@@ -3,7 +3,6 @@ package mpicbg.stitching.stitching;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.stitching.math.CommonFunctions.FusionType;
-
 public class StitchingParameters {
 
     /**
@@ -20,7 +19,7 @@ public class StitchingParameters {
     public static boolean alwaysCopy = false;
 
     public int dimensionality;
-    public FusionType fusionMethod;
+    public String fusionMethod;
     public String fusedName;
     public int checkPeaks;
     public boolean addTilesAsRois;

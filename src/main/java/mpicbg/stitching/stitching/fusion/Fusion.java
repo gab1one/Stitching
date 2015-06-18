@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -70,7 +69,7 @@ public class Fusion {
             final T targetType, final ArrayList<ImagePlus> images,
             final ArrayList<InvertibleBoundable> models,
             final int dimensionality, final boolean subpixelResolution,
-            final FusionType fusionType, final String outputDirectory,
+            final String fusionType, final String outputDirectory,
             final boolean noOverlap, final boolean ignoreZeroValues,
             final boolean displayImages) {
         // first we need to estimate the boundaries of the new image
@@ -123,45 +122,38 @@ public class Fusion {
                 // init the fusion
                 PixelFusion fusion = null;
 
-                switch (fusionType) {
-                case LINEAR_BLENDING:
+                
+                
+                if (FusionType.LINEAR_BLENDING.equals(fusionType)) {
                     if (ignoreZeroValues) {
                         fusion = new AveragePixelFusionIgnoreZero();
                     } else {
                         fusion = new AveragePixelFusion();
                     }
-                    break;
-                case AVERAGE:
+                } else if (FusionType.AVERAGE.equals(fusionType)) {
                     if (ignoreZeroValues) {
                         fusion = new MedianPixelFusionIgnoreZero();
                     } else {
                         fusion = new MedianPixelFusion();
                     }
-                    break;
-                case MEDIAN:
+                } else if (FusionType.MEDIAN.equals(fusionType)) {
                     if (ignoreZeroValues) {
                         fusion = new MaxPixelFusionIgnoreZero();
                     } else {
                         fusion = new MaxPixelFusion();
                     }
-                    break;
-                case MAX_INTENSITY:
+                } else if (FusionType.MAX_INTENSITY.equals(fusionType)) {
                     if (ignoreZeroValues) {
                         fusion = new MinPixelFusionIgnoreZero();
                     } else {
                         fusion = new MinPixelFusion();
                     }
-                    break;
-                case MIN_INTENSITY:
+                } else if (FusionType.MIN_INTENSITY.equals(fusionType)) {
                     fusion = new OverlapFusion();
-                    break;
-                case INTENSITY_RANDOM_TILE:
-                    break;
-                case NO_FUSE:
-                    break;
-                case OVERLAY:
-                    break;
-                default:
+                } else if (FusionType.INTENSITY_RANDOM_TILE.equals(fusionType)) {
+                } else if (FusionType.NO_FUSE.equals(fusionType)) {
+                } else if (FusionType.OVERLAY.equals(fusionType)) {
+                } else {
                     throw new IllegalStateException(
                             "This case was not considered !!!");
                 }
@@ -393,7 +385,7 @@ public class Fusion {
         // region
         // being
         // processed
-        final Vector<Chunk> threadChunks = new Vector<Chunk>(); // work
+        final List<Chunk> threadChunks = new ArrayList<Chunk>(); // work
         // divisions for
         // current
         // region
@@ -627,7 +619,7 @@ public class Fusion {
         private int loopSize;
         private final int[] loopDim;
 
-        private final Vector<Chunk> threadChunks;
+        private final List<Chunk> threadChunks;
         private final int threadNumber; // thread id
         private final ClassifiedRegion[] currentTile;
         private final ArrayList<InvertibleBoundable> transform;
@@ -645,7 +637,7 @@ public class Fusion {
                 final int threadNumber,
                 final List<ArrayList<RealRandomAccess<? extends RealType<?>>>> interpolators,
                 final ArrayList<? extends ImageInterpolation<? extends RealType<?>>> input,
-                final Vector<Chunk> threadChunks, final int numImages,
+                final List<Chunk> threadChunks, final int numImages,
                 final Img<T> output, final PixelFusion fusion,
                 final ClassifiedRegion[] currentTile,
                 final ArrayList<InvertibleBoundable> transform,
