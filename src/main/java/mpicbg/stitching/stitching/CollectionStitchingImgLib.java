@@ -46,72 +46,72 @@ public class CollectionStitchingImgLib {
             final Thread[] threads =
                     SimpleMultiThreading.newThreads(numThreads);
 
-            for (int ithread = 0; ithread < threads.length; ++ithread) {
-                threads[ithread] = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        final int myNumber = ai.getAndIncrement();
-
-                        for (int i = 0; i < pairs.size(); i++) {
-                            if (i % numThreads == myNumber) {
-                                final ComparePair pair = pairs.get(i);
-
-                                final long start = System.currentTimeMillis();
-
-                                // where do we approximately overlap?
-                                final Roi roi1 =
-                                        getROI(pair.getTile1().getElement(),
-                                                pair.getTile2().getElement());
-                                final Roi roi2 =
-                                        getROI(pair.getTile2().getElement(),
-                                                pair.getTile1().getElement());
-
-                                final PairWiseStitchingResult result =
-                                        PairWiseStitchingImgLib.stitchPairwise(
-                                                pair.getImagePlus1(),
-                                                pair.getImagePlus2(), roi1,
-                                                roi2, pair.getTimePoint1(),
-                                                pair.getTimePoint2(), params);
-                                if (result == null) {
-                                    Log.error("Collection stitching failed");
-                                    return;
-                                }
-
-                                if (params.dimensionality == 2) {
-                                    pair.setRelativeShift(new float[] {
-                                            result.getOffset(0),
-                                            result.getOffset(1) });
-                                } else {
-                                    pair.setRelativeShift(new float[] {
-                                            result.getOffset(0),
-                                            result.getOffset(1),
-                                            result.getOffset(2) });
-                                }
-
-                                pair.setCrossCorrelation(result
-                                        .getCrossCorrelation());
-
-                                Log.info(pair.getImagePlus1().getTitle()
-                                        + "["
-                                        + pair.getTimePoint1()
-                                        + "]"
-                                        + " <- "
-                                        + pair.getImagePlus2().getTitle()
-                                        + "["
-                                        + pair.getTimePoint2()
-                                        + "]"
-                                        + ": "
-                                        + Util.printCoordinates(result
-                                                .getOffset())
-                                        + " correlation (R)="
-                                        + result.getCrossCorrelation() + " ("
-                                        + (System.currentTimeMillis() - start)
-                                        + " ms)");
-                            }
-                        }
-                    }
-                });
-            }
+//            for (int ithread = 0; ithread < threads.length; ++ithread) {
+//                threads[ithread] = new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final int myNumber = ai.getAndIncrement();
+//
+//                        for (int i = 0; i < pairs.size(); i++) {
+//                            if (i % numThreads == myNumber) {
+//                                final ComparePair pair = pairs.get(i);
+//
+//                                final long start = System.currentTimeMillis();
+//
+//                                // where do we approximately overlap?
+//                                final Roi roi1 =
+//                                        getROI(pair.getTile1().getElement(),
+//                                                pair.getTile2().getElement());
+//                                final Roi roi2 =
+//                                        getROI(pair.getTile2().getElement(),
+//                                                pair.getTile1().getElement());
+//
+//                                final PairWiseStitchingResult result =
+//                                        PairWiseStitchingImgLib.stitchPairwise(
+//                                                pair.getImagePlus1(),
+//                                                pair.getImagePlus2(), roi1,
+//                                                roi2, pair.getTimePoint1(),
+//                                                pair.getTimePoint2(), params);
+//                                if (result == null) {
+//                                    Log.error("Collection stitching failed");
+//                                    return;
+//                                }
+//
+//                                if (params.dimensionality == 2) {
+//                                    pair.setRelativeShift(new float[] {
+//                                            result.getOffset(0),
+//                                            result.getOffset(1) });
+//                                } else {
+//                                    pair.setRelativeShift(new float[] {
+//                                            result.getOffset(0),
+//                                            result.getOffset(1),
+//                                            result.getOffset(2) });
+//                                }
+//
+//                                pair.setCrossCorrelation(result
+//                                        .getCrossCorrelation());
+//
+//                                Log.info(pair.getImagePlus1().getTitle()
+//                                        + "["
+//                                        + pair.getTimePoint1()
+//                                        + "]"
+//                                        + " <- "
+//                                        + pair.getImagePlus2().getTitle()
+//                                        + "["
+//                                        + pair.getTimePoint2()
+//                                        + "]"
+//                                        + ": "
+//                                        + Util.printCoordinates(result
+//                                                .getOffset())
+//                                        + " correlation (R)="
+//                                        + result.getCrossCorrelation() + " ("
+//                                        + (System.currentTimeMillis() - start)
+//                                        + " ms)");
+//                            }
+//                        }
+//                    }
+//                });
+//            }
 
             final long time = System.currentTimeMillis();
             SimpleMultiThreading.startAndJoin(threads);

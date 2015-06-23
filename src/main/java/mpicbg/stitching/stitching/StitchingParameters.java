@@ -34,6 +34,9 @@ public class StitchingParameters {
 
     public boolean virtual = false;
     public int channel1;
+    /**
+     * The Number of the channel dimension for the first Image
+     */
     public int channel2;
 
     public int timeSelect;
