@@ -1,13 +1,25 @@
 package mpicbg.stitching.stitching;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import sun.tools.tree.WhileStatement;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.stitching.utils.Log;
+import mpicbg.stitching.utils.FixedSizePriorityQueue;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
-import net.imagej.ops.Ops.Mean;
+import net.imagej.ops.Ops;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.neighborhood.Neighborhood;
+import net.imglib2.algorithm.neighborhood.RectangleShape;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.complex.ComplexFloatType;
+import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * Pairwise Stitching of two ImagePlus using ImgLib1 and PhaseCorrelation. It
@@ -29,7 +41,7 @@ public class PairWiseStitchingImgLib {
         result = computePhaseCorrelation(imp1, imp2, params, opservice);
 
         if (result == null) {
-            Log.error("Pairwise stitching failed.");
+            // Log.error("Pairwise stitching failed.");
             return null;
         }
 
@@ -43,34 +55,33 @@ public class PairWiseStitchingImgLib {
         return result;
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({ "deprecation", "unchecked" })
     public static <T extends RealType<T>> PairWiseStitchingResult computePhaseCorrelation(
             final ImgPlus<T> img1, final ImgPlus<T> img2,
             StitchingParameters params, OpService ops) {
 
-        Mean meanOp = ops.op(Mean.class, RealType.class);
+        // FFT
+        Img<ComplexFloatType> fftimg1 = (Img<ComplexFloatType>) ops.fft(img1);
+        Img<ComplexFloatType> fftimg2 = (Img<ComplexFloatType>) ops.fft(img2);
 
-        ImgPlus<T> flatImg1 =
-                (ImgPlus<T>) ops.project(img1, meanOp, params.channel1);
+        // TODO normalizeAndConjugate ?
 
-        ImgPlus<T> flatImg2 =
-                (ImgPlus<T>) ops.project(img2, meanOp, params.channel2);
+        // Multiply
+        // multiplyInPlace(fftimg1, fftimg2);
+        ops.math().multiply(fftimg1, fftimg1, fftimg2);
 
-        Object a = ops.fft(flatImg1, flatImg2);
+        // TODO generalize types
+        Img<FloatType> out =
+                (Img<FloatType>) ops.createimg(img1.getImg(), new FloatType());
+        // Inverse FFT
+        ops.ifft(fftimg1, out);
 
-        // final PhaseCorrelation<T, S> phaseCorr =
-        // new PhaseCorrelation<T, S>(img1, img2);
-        // phaseCorr.setInvestigateNumPeaks(numPeaks);
-        //
+        int numPeaks = params.checkPeaks;
+
+        List<PhaseCorrelationPeak> peaks = extractPhaseCorrelationPeaks(out, numPeaks, ops);
+
         // phaseCorr.setKeepPhaseCorrelationMatrix(subpixelAccuracy);
-        //
-        // phaseCorr.setComputeFFTinParalell(true);
-        // if (!phaseCorr.process()) {
-        // Log.error("Could not compute phase correlation: "
-        // + phaseCorr.getErrorMessage());
-        // return null;
-        // }
-        //
+
         // // result
         // final PhaseCorrelationPeak pcp = phaseCorr.getShift();
         // final float[] shift = new float[img1.getNumDimensions()];
@@ -122,6 +133,51 @@ public class PairWiseStitchingImgLib {
         //
         // return result;
         return null;
+    }
+
+    private static final <T extends Img<ComplexFloatType>> void multiplyInPlace(
+            final T fftImage1, final T fftImage2) {
+        final Cursor<ComplexFloatType> cursor1 = fftImage1.cursor();
+        final Cursor<ComplexFloatType> cursor2 = fftImage2.cursor();
+
+        while (cursor1.hasNext()) {
+            cursor1.fwd();
+            cursor2.fwd();
+
+            cursor1.get().mul(cursor2.get());
+        }
+    }
+
+    private static final List<PhaseCorrelationPeak> extractPhaseCorrelationPeaks(
+            final Img<FloatType> invPCM, final int numPeaks, OpService ops) {
+
+        FixedSizePriorityQueue<PhaseCorrelationPeak> peakQueue =
+                new FixedSizePriorityQueue<>(numPeaks);
+        int dims = invPCM.numDimensions();
+
+        int neighborhoodSize = 3; // TODO
+
+        // TODO Out of bounds = periodic
+        // TODO: OFFSETS?
+
+        RectangleShape rs = new RectangleShape(neighborhoodSize, false);
+        Cursor<Neighborhood<FloatType>> neighbour =
+                rs.neighborhoods(invPCM).cursor();
+        while (neighbour.hasNext()) {
+            Cursor<FloatType> nhCursor = neighbour.next().localizingCursor();
+
+            float maxValue = 0.0f;
+            int[] maxPos = new int[dims];
+            while (nhCursor.hasNext()) {
+                float localValue = nhCursor.next().get();
+                if (localValue > maxValue) {
+                    maxValue = localValue;
+                    nhCursor.localize(maxPos);
+                }
+            }
+            peakQueue.add(new PhaseCorrelationPeak(maxPos, maxValue));
+        }
+        return peakQueue.getAllElements();
     }
 
     /**
