@@ -17,12 +17,20 @@ public class FixedSizePriorityQueue<T extends Comparable<T>> {
     private final int capacity;
 
     public FixedSizePriorityQueue(int capacity) {
-        this.capacity = capacity;
-        treeSet = new TreeSet<>();
+        if (capacity < 1) {
+            throw new IllegalArgumentException("Capacity must be at least 1");
+        } else {
+            this.capacity = capacity;
+            treeSet = new TreeSet<T>();
+        }
     }
 
-    public List<T> getAllElements() {
-        return new ArrayList<>(treeSet);
+    /**
+     * 
+     * @return the Content of the Queue as an List.
+     */
+    public List<T> asList() {
+        return new ArrayList<T>(treeSet);
     }
 
     /**
@@ -30,24 +38,35 @@ public class FixedSizePriorityQueue<T extends Comparable<T>> {
      * capacity the smallest element in the queue will be removed to make room
      * for the new element. Provided the new Element is larger than it.
      * 
-     * @param element
+     * @param e
      *            the element to insert.
      * @return if the insertion was successful.
      */
-    public boolean add(T element) {
+    public boolean add(T e) {
         // there is space left
         if (treeSet.size() < capacity) {
-            return treeSet.add(element);
+            return treeSet.add(e);
         }
 
         // no space left
-        if (element.compareTo(treeSet.first()) < 0) {
+        if (e.compareTo(treeSet.first()) < 0) {
             // element is too low
             return false;
         } else {
             // make room for new element
             treeSet.pollFirst();
-            return treeSet.add(element);
+            return treeSet.add(e);
         }
+    }
+
+    /**
+     * Removes the specified element from this queue if it is present.
+     *
+     * @param e
+     *            element to be removed from this set, if present
+     * @return {@code true} if this set contained the specified element
+     */
+    public boolean remove(T e) {
+        return treeSet.remove(e);
     }
 }
