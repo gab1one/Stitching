@@ -1,25 +1,28 @@
 package mpicbg.stitching.stitching;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import sun.tools.tree.WhileStatement;
-import ij.ImagePlus;
-import ij.gui.Roi;
-import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.stitching.utils.FixedSizePriorityQueue;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
-import net.imagej.ops.Ops;
+import net.imagej.ops.convolve.CorrelateFFTRAI;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.neighborhood.Neighborhood;
 import net.imglib2.algorithm.neighborhood.RectangleShape;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.ExtendedRandomAccessibleInterval;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
 
 /**
  * Pairwise Stitching of two ImagePlus using ImgLib1 and PhaseCorrelation. It
@@ -60,26 +63,46 @@ public class PairWiseStitchingImgLib {
             final ImgPlus<T> img1, final ImgPlus<T> img2,
             StitchingParameters params, OpService ops) {
 
-        // FFT
-        Img<ComplexFloatType> fftimg1 = (Img<ComplexFloatType>) ops.fft(img1);
-        Img<ComplexFloatType> fftimg2 = (Img<ComplexFloatType>) ops.fft(img2);
+        OutOfBoundsConstantValueFactory<T, RandomAccessibleInterval<T>> zeroPad =
+                new OutOfBoundsConstantValueFactory<T, RandomAccessibleInterval<T>>(
+                        Util.getTypeFromInterval(img1).createVariable());
 
-        // TODO normalizeAndConjugate ?
+        IntervalView<T> extendedImg1 =
+                Views.interval(Views.extendZero(img1), img1);
+        IntervalView<T> extendedImg2 =
+                Views.interval(Views.extendZero(img2), img2);
 
-        // Multiply
-        // multiplyInPlace(fftimg1, fftimg2);
-        ops.math().multiply(fftimg1, fftimg1, fftimg2);
+        Object a = ops.run(CorrelateFFTRAI.class, img1, img1, img2, img2);
+        a.toString();
 
-        // TODO generalize types
-        Img<FloatType> out =
-                (Img<FloatType>) ops.createimg(img1.getImg(), new FloatType());
-        // Inverse FFT
-        ops.ifft(fftimg1, out);
-
-        int numPeaks = params.checkPeaks;
-
-        List<PhaseCorrelationPeak> peaks = extractPhaseCorrelationPeaks(out, numPeaks, ops);
-
+        // // FFT
+        // Img<ComplexFloatType> fftimg1 = (Img<ComplexFloatType>)
+        // ops.fft(img1);
+        // Img<ComplexFloatType> fftimg2 = (Img<ComplexFloatType>)
+        // ops.fft(img2);
+        //
+        // // TODO normalizeAndConjugate ?
+        //
+        // // Multiply
+        // // multiplyInPlace(fftimg1, fftimg2); // TODO Test if same output as
+        // \/
+        // ops.math().multiply(fftimg1, fftimg1, fftimg2);
+        //
+        // // TODO generalize types
+        // Img<FloatType> out =
+        // (Img<FloatType>) ops.createimg(img1.getImg(), new FloatType());
+        // // Inverse FFT
+        // ops.ifft(fftimg1, out);
+        //
+        // int numPeaks = params.checkPeaks;
+        //
+        // List<PhaseCorrelationPeak> peaks =
+        // extractPhaseCorrelationPeaks(out, numPeaks, ops);
+        //
+        // long[] dims = new long[out.numDimensions()];
+        // out.dimensions(dims);
+        // verifyWithCrossCorrelation(peaks, dims, img1, img2);
+        //
         // phaseCorr.setKeepPhaseCorrelationMatrix(subpixelAccuracy);
 
         // // result
@@ -135,6 +158,59 @@ public class PairWiseStitchingImgLib {
         return null;
     }
 
+    private static <T extends RealType<T>> void verifyWithCrossCorrelation(
+            final List<PhaseCorrelationPeak> peaks, final long[] dims,
+            final ImgPlus<T> img1, final ImgPlus<T> img2) {
+
+        // final boolean[][] coordinates =
+        // Util.getRecursiveCoordinates(img1.numDimensions());
+
+        @SuppressWarnings("unused")
+        final ArrayList<PhaseCorrelationPeak> newPeakList =
+                new ArrayList<PhaseCorrelationPeak>();
+
+        // no need to wrap the point coordinates
+
+        // //
+        // // test them multithreaded
+        // //
+        // final AtomicInteger ai = new AtomicInteger(0);
+        // Thread[] threads = SimpleMultiThreading.newThreads(4);
+        // final int numThreads = threads.length;
+        //
+        // for (int ithread = 0; ithread < threads.length; ++ithread)
+        // threads[ithread] = new Thread(new Runnable() {
+        // public void run() {
+        // final int myNumber = ai.getAndIncrement();
+        //
+        // for (int i = 0; i < newPeakList.size(); ++i)
+        // if (i % numThreads == myNumber) {
+        // final PhaseCorrelationPeak peak =
+        // newPeakList.get(i);
+        // final long[] numPixels = new long[1];
+        //
+        // peak.setCrossCorrelationPeak(
+        // (float) testCrossCorrelation(
+        // peak.getPosition(), image1, image2,
+        // minOverlapPx, numPixels));
+        // peak.setNumPixels(numPixels[0]);
+        //
+        // // sort by cross correlation peak
+        // peak.setSortPhaseCorrelation(false);
+        // }
+        //
+        // }
+        // });
+        //
+        // SimpleMultiThreading.startAndJoin(threads);
+        //
+        // // update old list and sort
+        // peakList.clear();
+        // peakList.addAll(newPeakList);
+        // Collections.sort(peakList);
+
+    }
+
     private static final <T extends Img<ComplexFloatType>> void multiplyInPlace(
             final T fftImage1, final T fftImage2) {
         final Cursor<ComplexFloatType> cursor1 = fftImage1.cursor();
@@ -148,65 +224,49 @@ public class PairWiseStitchingImgLib {
         }
     }
 
-    private static final List<PhaseCorrelationPeak> extractPhaseCorrelationPeaks(
-            final Img<FloatType> invPCM, final int numPeaks, OpService ops) {
+    /**
+     * Extract the n best peaks in the phase correlation.
+     * 
+     * @param invPCM
+     *            the Inverted Phase correlation matrix
+     * @param numPeaks
+     *            the number of peaks to extract
+     * @param ops
+     *            the Opservice to use
+     * @return list of the n best peaks
+     */
+    private static final <T extends RealType<T>> List<PhaseCorrelationPeak> extractPhaseCorrelationPeaks(
+            final Img<T> invPCM, final int numPeaks, OpService ops) {
 
-        FixedSizePriorityQueue<PhaseCorrelationPeak> peakQueue =
-                new FixedSizePriorityQueue<>(numPeaks);
-        int dims = invPCM.numDimensions();
+        FixedSizePriorityQueue<PhaseCorrelationPeak> peaks =
+                new FixedSizePriorityQueue<PhaseCorrelationPeak>(numPeaks);
+        final int dims = invPCM.numDimensions();
 
-        int neighborhoodSize = 3; // TODO
+        ExtendedRandomAccessibleInterval<T, Img<T>> extended =
+                Views.extendZero(invPCM);
+        IntervalView<T> interval = Views.interval(extended, invPCM);
 
-        // TODO Out of bounds = periodic
         // TODO: OFFSETS?
 
+        // Define neightborhood for the Peaks
+        final int neighborhoodSize = 3; // TODO
         RectangleShape rs = new RectangleShape(neighborhoodSize, false);
-        Cursor<Neighborhood<FloatType>> neighbour =
-                rs.neighborhoods(invPCM).cursor();
+        Cursor<Neighborhood<T>> neighbour = rs.neighborhoods(interval).cursor();
+        // find local maximum in each neighborhood
         while (neighbour.hasNext()) {
-            Cursor<FloatType> nhCursor = neighbour.next().localizingCursor();
-
-            float maxValue = 0.0f;
-            int[] maxPos = new int[dims];
+            Cursor<T> nhCursor = neighbour.next().localizingCursor();
+            double maxValue = 0.0d;
+            long[] maxPos = new long[dims];
             while (nhCursor.hasNext()) {
-                float localValue = nhCursor.next().get();
+                double localValue = nhCursor.next().getRealDouble();
                 if (localValue > maxValue) {
                     maxValue = localValue;
                     nhCursor.localize(maxPos);
                 }
             }
-            peakQueue.add(new PhaseCorrelationPeak(maxPos, maxValue));
+            // queue ensures only n best are added.
+            peaks.add(new PhaseCorrelationPeak(maxPos, maxValue));
         }
-        return peakQueue.getAllElements();
+        return peaks.asList();
     }
-
-    /**
-     * Determines if this imageplus with these parameters can be wrapped
-     * directly into an Image<T>. This is important, because if we would wrap
-     * the first but not the second image, they would have different
-     * {@link ImageFactory}s
-     *
-     * @param imp
-     *            - the ImagePlus
-     * @param channel
-     *            - which channel (if channel=0 means average all channels)
-     *
-     * @return true if it can be wrapped, otherwise false
-     */
-    public static boolean canWrapIntoImgLib(final ImagePlus imp, Roi roi,
-            final int channel) {
-        // first test the roi
-        roi = getOnlyRectangularRoi(roi);
-
-        return roi == null && channel > 0;
-    }
-
-    protected static Roi getOnlyRectangularRoi(final Roi roi) {
-        // we can only do rectangular rois
-        if (roi != null && roi.getType() != Roi.RECTANGLE) {
-            return null;
-        }
-        return roi;
-    }
-
 }

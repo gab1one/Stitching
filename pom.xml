@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>10.0.1</version>
+		<version>11.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -60,12 +60,22 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
 		</dependency>
-       <dependency>
+		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-ops</artifactId>
 			<version>0.14.0</version>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>io.scif</groupId>
+			<artifactId>scifio</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.scif</groupId>
+			<artifactId>scifio-jai-imageio</artifactId>
+		</dependency>
+
 
 		<!-- ImgLib2 dependencies -->
 		<dependency>
@@ -115,7 +125,6 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>

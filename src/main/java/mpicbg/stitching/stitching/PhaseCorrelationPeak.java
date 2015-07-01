@@ -4,18 +4,19 @@ import java.util.Arrays;
 
 public class PhaseCorrelationPeak implements Comparable<PhaseCorrelationPeak> {
 
-    private int[] position = null;
+    private long[] position = null;
     private int[] originalInvPCMPosition = null;
-    private float phaseCorrelationPeak = 0, crossCorrelationPeak = 0;
+    double phaseCorrelationPeak = 0;
+    private float crossCorrelationPeak = 0;
     private boolean sortPhaseCorrelation = true;
 
-    public PhaseCorrelationPeak(final int[] position,
-            final float phaseCorrelationPeak) {
-        this.position = position.clone();
-        this.phaseCorrelationPeak = phaseCorrelationPeak;
+    public PhaseCorrelationPeak(final long[] maxPos,
+            final double maxValue) {
+        this.position = maxPos.clone();
+        this.phaseCorrelationPeak = maxValue;
     }
 
-    public int[] getPosition() {
+    public long[] getPosition() {
         return position.clone();
     }
 
@@ -23,7 +24,7 @@ public class PhaseCorrelationPeak implements Comparable<PhaseCorrelationPeak> {
         return originalInvPCMPosition.clone();
     }
 
-    public float getPhaseCorrelationPeak() {
+    public double getPhaseCorrelationPeak() {
         return phaseCorrelationPeak;
     }
 
@@ -56,13 +57,16 @@ public class PhaseCorrelationPeak implements Comparable<PhaseCorrelationPeak> {
         return 0;
     }
 
+    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + Float.floatToIntBits(crossCorrelationPeak);
         result = prime * result + Arrays.hashCode(originalInvPCMPosition);
-        result = prime * result + Float.floatToIntBits(phaseCorrelationPeak);
+        long temp;
+        temp = Double.doubleToLongBits(phaseCorrelationPeak);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
         result = prime * result + Arrays.hashCode(position);
         result = prime * result + (sortPhaseCorrelation ? 1231 : 1237);
         return result;
@@ -80,11 +84,11 @@ public class PhaseCorrelationPeak implements Comparable<PhaseCorrelationPeak> {
         if (Float.floatToIntBits(crossCorrelationPeak) != Float
                 .floatToIntBits(other.crossCorrelationPeak))
             return false;
-        if (!Arrays
-                .equals(originalInvPCMPosition, other.originalInvPCMPosition))
+        if (!Arrays.equals(originalInvPCMPosition,
+                other.originalInvPCMPosition))
             return false;
-        if (Float.floatToIntBits(phaseCorrelationPeak) != Float
-                .floatToIntBits(other.phaseCorrelationPeak))
+        if (Double.doubleToLongBits(phaseCorrelationPeak) != Double
+                .doubleToLongBits(other.phaseCorrelationPeak))
             return false;
         if (!Arrays.equals(position, other.position))
             return false;
