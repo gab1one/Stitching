@@ -21,7 +21,7 @@ public class StitchingParameters {
     public int dimensionality;
     public String fusionMethod;
     public String fusedName;
-    public int checkPeaks;
+    public int checkPeaks = 5;
     public boolean addTilesAsRois;
     public boolean computeOverlap, subpixelAccuracy,
             ignoreZeroValuesFusion = false, downSample = false,
