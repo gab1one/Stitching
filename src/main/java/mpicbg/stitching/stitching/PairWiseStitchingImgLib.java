@@ -5,16 +5,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import imglib.ops.operator.binary.Average;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.stitching.utils.FixedSizePriorityQueue;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
+import net.imagej.ops.Ops.Mean;
 import net.imagej.ops.convolve.CorrelateFFTRAI;
+import net.imagej.ops.fft.filter.CreateFFTFilterMemory;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.neighborhood.Neighborhood;
 import net.imglib2.algorithm.neighborhood.RectangleShape;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
@@ -72,9 +76,23 @@ public class PairWiseStitchingImgLib {
         IntervalView<T> extendedImg2 =
                 Views.interval(Views.extendZero(img2), img2);
 
-        Object a = ops.run(CorrelateFFTRAI.class, img1, img1, img2, img2);
-        a.toString();
+        Img<FloatType> out2 =
+                new ArrayImgFactory<FloatType>().create(img1, new FloatType());
 
+        // this time create reusable fft memory first
+        final CreateFFTFilterMemory<FloatType, FloatType, FloatType, ComplexFloatType> createMemory =
+                ops.op(CreateFFTFilterMemory.class, img1, img2);
+
+        createMemory.run();
+
+        Img<FloatType> out = (Img<FloatType>) ops.correlate(createMemory.getRAIExtendedInput(),
+                createMemory.getRAIExtendedKernel(), createMemory.getFFTImg(),
+                createMemory.getFFTKernel(), out2);
+
+        List<PhaseCorrelationPeak> peaks =
+                extractPhaseCorrelationPeaks(out, 2, ops);
+        peaks.toString();
+        // out.toString();
         // // FFT
         // Img<ComplexFloatType> fftimg1 = (Img<ComplexFloatType>)
         // ops.fft(img1);
@@ -209,19 +227,6 @@ public class PairWiseStitchingImgLib {
         // peakList.addAll(newPeakList);
         // Collections.sort(peakList);
 
-    }
-
-    private static final <T extends Img<ComplexFloatType>> void multiplyInPlace(
-            final T fftImage1, final T fftImage2) {
-        final Cursor<ComplexFloatType> cursor1 = fftImage1.cursor();
-        final Cursor<ComplexFloatType> cursor2 = fftImage2.cursor();
-
-        while (cursor1.hasNext()) {
-            cursor1.fwd();
-            cursor2.fwd();
-
-            cursor1.get().mul(cursor2.get());
-        }
     }
 
     /**
