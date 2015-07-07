@@ -13,15 +13,15 @@ import java.util.TreeSet;
  */
 public class FixedSizePriorityQueue<T extends Comparable<T>> {
 
-    private final TreeSet<T> treeSet;
-    private final int capacity;
+    private final TreeSet<T> m_treeSet;
+    private final int m_capacity;
 
     public FixedSizePriorityQueue(int capacity) {
         if (capacity < 1) {
             throw new IllegalArgumentException("Capacity must be at least 1");
         } else {
-            this.capacity = capacity;
-            treeSet = new TreeSet<T>();
+            this.m_capacity = capacity;
+            m_treeSet = new TreeSet<T>();
         }
     }
 
@@ -30,7 +30,7 @@ public class FixedSizePriorityQueue<T extends Comparable<T>> {
      * @return the Content of the Queue as an List.
      */
     public List<T> asList() {
-        return new ArrayList<T>(treeSet);
+        return new ArrayList<T>(m_treeSet);
     }
 
     /**
@@ -44,29 +44,28 @@ public class FixedSizePriorityQueue<T extends Comparable<T>> {
      */
     public boolean add(T e) {
         // there is space left
-        if (treeSet.size() < capacity) {
-            return treeSet.add(e);
+        if (m_treeSet.size() < m_capacity) {
+            return m_treeSet.add(e);
         }
 
         // no space left
-        if (e.compareTo(treeSet.first()) < 0) {
+        if (e.compareTo(m_treeSet.first()) <= 0) {
             // element is too low
             return false;
         } else {
-            // make room for new element
-            treeSet.pollFirst();
-            return treeSet.add(e);
+            boolean result = m_treeSet.add(e);
+            if (result) {
+                // remove lowest element
+                m_treeSet.pollFirst();
+            }
+            return result;
         }
     }
 
     /**
-     * Removes the specified element from this queue if it is present.
-     *
-     * @param e
-     *            element to be removed from this set, if present
-     * @return {@code true} if this set contained the specified element
+     * @return the size of the queue.
      */
-    public boolean remove(T e) {
-        return treeSet.remove(e);
+    public int size() {
+        return m_treeSet.size();
     }
 }
