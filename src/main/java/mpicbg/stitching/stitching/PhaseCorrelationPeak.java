@@ -16,6 +16,12 @@ public class PhaseCorrelationPeak implements Comparable<PhaseCorrelationPeak> {
         this.phaseCorrelationPeak = maxValue;
     }
 
+    @Override
+    public String toString() {
+        return "PhaseCorrelationPeak [position=" + Arrays.toString(position)
+                + ", phaseCorrelationPeak=" + phaseCorrelationPeak + "]";
+    }
+
     public long[] getPosition() {
         return position.clone();
     }

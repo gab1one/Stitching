@@ -1,27 +1,36 @@
 package mpicbg.stitching.stitching;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import imglib.ops.operator.binary.Average;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.stitching.utils.ComplexImageHelpers;
 import mpicbg.stitching.utils.FixedSizePriorityQueue;
 import net.imagej.ImgPlus;
+import net.imagej.ops.AbstractInplaceFunction;
+import net.imagej.ops.AbstractOutputFunction;
+import net.imagej.ops.InplaceFunction;
 import net.imagej.ops.OpService;
-import net.imagej.ops.Ops.Mean;
-import net.imagej.ops.convolve.CorrelateFFTRAI;
+import net.imagej.ops.convolve.CorrelateFFTImg;
 import net.imagej.ops.fft.filter.CreateFFTFilterMemory;
+import net.imagej.ops.join.AbstractJoinFunctions;
 import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.neighborhood.Neighborhood;
 import net.imglib2.algorithm.neighborhood.RectangleShape;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
+import net.imglib2.outofbounds.OutOfBoundsFactory;
+import net.imglib2.outofbounds.OutOfBoundsMirrorExpWindowingFactory;
+import net.imglib2.outofbounds.OutOfBoundsPeriodicFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
@@ -39,6 +48,9 @@ import net.imglib2.view.Views;
  *
  */
 public class PairWiseStitchingImgLib {
+
+    private static final float normalizationThreshold = 1E-5f;
+
     public static <T extends RealType<T>> PairWiseStitchingResult stitchPairwise(
             final ImgPlus<T> imp1, final ImgPlus<T> imp2, final int timepoint1,
             final int timepoint2, final StitchingParameters params,
@@ -67,31 +79,52 @@ public class PairWiseStitchingImgLib {
             final ImgPlus<T> img1, final ImgPlus<T> img2,
             StitchingParameters params, OpService ops) {
 
-        OutOfBoundsConstantValueFactory<T, RandomAccessibleInterval<T>> zeroPad =
-                new OutOfBoundsConstantValueFactory<T, RandomAccessibleInterval<T>>(
-                        Util.getTypeFromInterval(img1).createVariable());
+        int padding = 0;
+        OutOfBoundsMirrorExpWindowingFactory<T, Img<T>> zeroPad =
+                new OutOfBoundsMirrorExpWindowingFactory<T, Img<T>>(padding);
 
-        IntervalView<T> extendedImg1 =
-                Views.interval(Views.extendZero(img1), img1);
-        IntervalView<T> extendedImg2 =
-                Views.interval(Views.extendZero(img2), img2);
+        long[] size = new long[] { 512, 512 };
+        Img<FloatType> outManual = ArrayImgs.floats(size);
 
-        Img<FloatType> out2 =
-                new ArrayImgFactory<FloatType>().create(img1, new FloatType());
+        Img<ComplexFloatType> fft1 = (Img<ComplexFloatType>) ops.fft(img1);
+        Img<ComplexFloatType> fft2 = (Img<ComplexFloatType>) ops.fft(img2);
 
-        // this time create reusable fft memory first
-        final CreateFFTFilterMemory<FloatType, FloatType, FloatType, ComplexFloatType> createMemory =
-                ops.op(CreateFFTFilterMemory.class, img1, img2);
+        // TODO Create op for this!
+        ComplexImageHelpers.normalizeComplexImage(fft1, normalizationThreshold);
+        ComplexImageHelpers.normalizeAndConjugateComplexImage(fft2,
+                normalizationThreshold);
 
-        createMemory.run();
+        // // multiply the complex images
+        // Cursor<ComplexFloatType> fft1cursor = fft1.localizingCursor();
+        // RandomAccess<ComplexFloatType> fft2RA = fft2.randomAccess();
+        //
+        // while (fft1cursor.hasNext()) {
+        // fft1cursor.fwd();
+        // fft2RA.setPosition(fft1cursor);
+        // fft1cursor.get().mul(fft2RA.get());
+        // }
+        //
 
-        Img<FloatType> out = (Img<FloatType>) ops.correlate(createMemory.getRAIExtendedInput(),
-                createMemory.getRAIExtendedKernel(), createMemory.getFFTImg(),
-                createMemory.getFFTKernel(), out2);
+        // multiply the complex images
+        Cursor<ComplexFloatType> fft1cursor = fft1.cursor();
+        Cursor<ComplexFloatType> fft2RA = fft2.cursor();
+
+        while (fft1cursor.hasNext()) {
+            fft1cursor.next().mul(fft2RA.next());
+        }
+
+        ops.ifft(outManual, fft1);
+        ImageJFunctions.show(outManual, "manual");
+
+        Img<FloatType> outAuto = ArrayImgs.floats(size);
+
+        ops.correlate(outAuto, img1, img2, size, zeroPad, zeroPad);
+
+        ImageJFunctions.show(outAuto, "opp-a-licious");
 
         List<PhaseCorrelationPeak> peaks =
-                extractPhaseCorrelationPeaks(out, 2, ops);
-        peaks.toString();
+                extractPhaseCorrelationPeaks(outManual, params.checkPeaks, ops);
+        System.out.println(peaks.toString());
         // out.toString();
         // // FFT
         // Img<ComplexFloatType> fftimg1 = (Img<ComplexFloatType>)
