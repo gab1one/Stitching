@@ -1,10 +1,9 @@
 package mpicbg.stitching.plugin;
 
-import ij.ImagePlus;
-import ij.plugin.PlugIn;
-
 import java.util.ArrayList;
 
+import ij.ImagePlus;
+import ij.plugin.PlugIn;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
@@ -14,8 +13,10 @@ import mpicbg.stitching.stitching.StitchingParameters;
 import mpicbg.stitching.utils.Log;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
+import net.imglib2.RandomAccess;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 
 public class Stitching_Pairwise implements PlugIn {
     final private String myURL = "http://fly.mpi-cbg.de/preibisch";
@@ -58,10 +59,9 @@ public class Stitching_Pairwise implements PlugIn {
             singleTimepointStitching(imp1, imp2, params, models, ops);
         } else {
             // multiTimepointStitching(imp1, imp2, params, models, ops);
+            // TODO: IMPLEMENT
         }
-        // now fuse
-        // return fuseImg(imp1, imp2, params, models);
-        return null;
+        return fuseImg(imp1, imp2, params, models, ops);
     }
 
     private static <T extends RealType<T>> void singleTimepointStitching(
@@ -72,18 +72,18 @@ public class Stitching_Pairwise implements PlugIn {
         final long start = System.currentTimeMillis();
 
         final PairWiseStitchingResult result;
-        
+
         // Always compute overlap!
-        result =
-                PairWiseStitchingImgLib.stitchPairwise(imp1, imp2, 1, 1,
-                        params, opservice);
+        result = PairWiseStitchingImgLib.stitchPairwise(imp1, imp2, 1, 1,
+                params, opservice);
+
         Log.info("shift (second relative to first): "
                 + Util.printCoordinates(result.getOffset())
                 + " correlation (R)=" + result.getCrossCorrelation() + " ("
                 + (System.currentTimeMillis() - start) + " ms)");
 
         // update the dialog to show the numbers next time
-
+        params.dimensionality = 2;
         for (int f = 1; f <= imp1.dimension(params.channel1); ++f) {
             if (params.dimensionality == 2) {
                 final TranslationModel2D model1 = new TranslationModel2D();
@@ -102,6 +102,62 @@ public class Stitching_Pairwise implements PlugIn {
                 models.add(model2);
             }
         }
+    }
+
+    /**
+     * Fuses an Image selecting the right parameters for
+     * {@link #fuse(RealType, ImagePlus, ImagePlus, ArrayList, StitchingParameters)}
+     *
+     * @param imp1
+     * @param imp2
+     * @param params
+     * @param models
+     * @return
+     */
+    private static <T extends RealType<T>> ImgPlus<T> fuseImg(
+            final ImgPlus<T> imp1, final ImgPlus<T> imp2,
+            final StitchingParameters params,
+            final ArrayList<InvertibleBoundable> models, OpService ops) {
+        Log.info("Fusing ...");
+
+        final long start = System.currentTimeMillis();
+        final ImgPlus<T> resultImg = fuse(imp1, imp2, params, models, ops);
+
+        Log.info("Finished ... (" + (System.currentTimeMillis() - start)
+                + " ms)");
+        return resultImg;
+    }
+
+    private static <T extends RealType<T>> ImgPlus<T> fuse(
+            final ImgPlus<T> img1, final ImgPlus<T> img2,
+            final StitchingParameters params,
+            final ArrayList<InvertibleBoundable> models, OpService ops) {
+        final ArrayList<ImgPlus<T>> images = new ArrayList<ImgPlus<T>>();
+        images.add(img1);
+        images.add(img2);
+        
+        RandomAccess<T> origRA = img2.randomAccess();
+        origRA.setPosition(new int[]{10,10}};
+        
+        RandomAccess<T> offsetimg2 = Views.offset(img2, 100, 0).randomAccess();
+        offsetimg2.setPosition(10, 10);
+        T a = offsetimg2.get();
+        T b = origRA.get();
+
+        System.out.println(a.compareTo(b));
+
+        // if (params.fusionMethod != FusionType.OVERLAY
+        // || params.fusionMethod != FusionType.INTENSITY_RANDOM_TILE) {
+        // final ImagePlus imp = Fusion.fuse(targetType, images, models,
+        // params.dimensionality, params.subpixelAccuracy,
+        // params.fusionMethod, null, false,
+        // params.ignoreZeroValuesFusion, params.displayFusion);
+        // return imp;
+        // } else {
+        // // "Do not fuse images"
+        // return null;
+        // }
+        return null;
     }
 
     //
@@ -198,194 +254,6 @@ public class Stitching_Pairwise implements PlugIn {
     // }
     // }
 
-    // /**
-    // * Fuses an Image selecting the right parameters for
-    // * {@link #fuse(RealType, ImagePlus, ImagePlus, ArrayList,
-    // StitchingParameters)}
-    // *
-    // * @param imp1
-    // * @param imp2
-    // * @param params
-    // * @param models
-    // * @return
-    // */
-    // private static <T extends RealType<T>> ImgPlus<T> fuseImg(
-    // final ImgPlus<T> imp1, final ImgPlus<T> imp2,
-    // final StitchingParameters params,
-    // final ArrayList<InvertibleBoundable> models) {
-    // Log.info("Fusing ...");
-    //
-    // final ImgPlus<T> resultImg;
-    // final long start = System.currentTimeMillis();
-    //
-    // if (imp1.getType() == ImagePlus.GRAY32
-    // || imp2.getType() == ImagePlus.GRAY32) {
-    // resultImg = fuse(new FloatType(), imp1, imp2, models, params);
-    // } else if (imp1.getType() == ImagePlus.GRAY16
-    // || imp2.getType() == ImagePlus.GRAY16) {
-    // resultImg =
-    // fuse(new UnsignedShortType(), imp1, imp2, models, params);
-    // } else {
-    // resultImg =
-    // fuse(new UnsignedByteType(), imp1, imp2, models, params);
-    // }
-    // Log.info("Finished ... (" + (System.currentTimeMillis() - start)
-    // + " ms)");
-    // return resultImg;
-    // }
-
-    // private static <T extends RealType<T>> ImagePlus fuse(final T targetType,
-    // final ImagePlus imp1, final ImagePlus imp2,
-    // final ArrayList<InvertibleBoundable> models,
-    // final StitchingParameters params) {
-    // final ArrayList<ImagePlus> images = new ArrayList<ImagePlus>();
-    // images.add(imp1);
-    // images.add(imp2);
-    //
-    // if (params.fusionMethod != FusionType.OVERLAY
-    // || params.fusionMethod != FusionType.INTENSITY_RANDOM_TILE) {
-    // final ImagePlus imp =
-    // Fusion.fuse(targetType, images, models,
-    // params.dimensionality, params.subpixelAccuracy,
-    // params.fusionMethod, null, false,
-    // params.ignoreZeroValuesFusion, params.displayFusion);
-    // return imp;
-    // } else if (params.fusionMethod == FusionType.OVERLAY) // overlay
-    // {
-    // // images are always the same, we just trigger different timepoints
-    // final InterpolatorFactory<FloatType, RandomAccessible<FloatType>>
-    // factory;
-    //
-    // if (params.subpixelAccuracy) {
-    // factory = new NLinearInterpolatorFactory<FloatType>();
-    // } else {
-    // factory = new NearestNeighborInterpolatorFactory<FloatType>();
-    // }
-    //
-    // // fuses the first timepoint but estimates the boundaries for all
-    // // timepoints as it gets all models
-    // final CompositeImage timepoint0 =
-    // OverlayFusion.createOverlay(targetType, images, models,
-    // params.dimensionality, 1, factory);
-    //
-    // if (imp1.getNFrames() > 1) {
-    // final ImageStack stack =
-    // new ImageStack(timepoint0.getWidth(),
-    // timepoint0.getHeight());
-    //
-    // // add all slices of the first timepoint
-    // for (int c = 1; c <= timepoint0.getStackSize(); ++c) {
-    // stack.addSlice("", timepoint0.getStack().getProcessor(c));
-    // }
-    //
-    // // "Overlay into composite image"
-    // for (int f = 2; f <= imp1.getNFrames(); ++f) {
-    // final CompositeImage tmp =
-    // OverlayFusion.createOverlay(targetType, images,
-    // models, params.dimensionality, f, factory);
-    //
-    // // add all slices of the first timepoint
-    // for (int c = 1; c <= tmp.getStackSize(); ++c) {
-    // stack.addSlice("", tmp.getStack().getProcessor(c));
-    // }
-    // }
-    //
-    // // convertXYZCT ...
-    // final ImagePlus result = new ImagePlus(params.fusedName, stack);
-    //
-    // // numchannels, z-slices, timepoints (but right now the order is
-    // // still XYZCT)
-    // result.setDimensions(timepoint0.getNChannels(),
-    // timepoint0.getNSlices(), imp1.getNFrames());
-    // return CompositeImageFixer.makeComposite(result,
-    // CompositeImage.COMPOSITE);
-    // } else {
-    // timepoint0.setTitle(params.fusedName);
-    // return timepoint0;
-    // }
-    // } else {
-    // // "Do not fuse images"
-    // return null;
-    // }
-    // }
-    //
-    // protected static <T extends RealType<T>> List<ComparePair>
-    // getComparePairs(
-    // final ImgPlus<T> imp1, final ImgPlus<T> imp2,
-    // final int dimensionality, final int timeSelect) {
-    // final Model<?> model;
-    //
-    // if (dimensionality == 2) {
-    // model = new TranslationModel2D();
-    // } else {
-    // model = new TranslationModel3D();
-    // }
-    //
-    // final ArrayList<ImagePlusTimePoint> listImp1 =
-    // new ArrayList<ImagePlusTimePoint>();
-    // final ArrayList<ImagePlusTimePoint> listImp2 =
-    // new ArrayList<ImagePlusTimePoint>();
-    //
-    // for (int timePoint1 = 1; timePoint1 <= imp1.getNFrames(); timePoint1++) {
-    // listImp1.add(new ImagePlusTimePoint(imp1, 1, timePoint1, model
-    // .copy(), null));
-    // }
-    //
-    // for (int timePoint2 = 1; timePoint2 <= imp2.getNFrames(); timePoint2++) {
-    // listImp2.add(new ImagePlusTimePoint(imp2, 2, timePoint2, model
-    // .copy(), null));
-    // }
-    //
-    // final List<ComparePair> pairs = new ArrayList<ComparePair>();
-    //
-    // // imp1 vs imp2 at all timepoints
-    // for (int timePointA = 1; timePointA <= Math.min(imp1.getNFrames(),
-    // imp2.getNFrames()); timePointA++) {
-    // final ImagePlusTimePoint a = listImp1.get(timePointA - 1);
-    // final ImagePlusTimePoint b = listImp2.get(timePointA - 1);
-    // pairs.add(new ComparePair(a, b));
-    // }
-    //
-    // if (timeSelect == 1) {
-    // // consequtively all timepoints of imp1
-    // for (int timePointA = 1; timePointA <= imp1.getNFrames() - 1;
-    // timePointA++) {
-    // pairs.add(new ComparePair(listImp1.get(timePointA - 1),
-    // listImp1.get(timePointA + 1 - 1)));
-    // }
-    //
-    // // consequtively all timepoints of imp2
-    // for (int timePointB = 1; timePointB <= imp2.getNFrames() - 1;
-    // timePointB++) {
-    // pairs.add(new ComparePair(listImp2.get(timePointB - 1),
-    // listImp2.get(timePointB + 1 - 1)));
-    // }
-    //
-    // } else {
-    // // all against all for imp1
-    // for (int timePointA = 1; timePointA <= imp1.getNFrames() - 1;
-    // timePointA++) {
-    // for (int timePointB = timePointA + 1; timePointB <= imp1
-    // .getNFrames(); timePointB++) {
-    // pairs.add(new ComparePair(listImp1.get(timePointA - 1),
-    // listImp1.get(timePointB - 1)));
-    // }
-    // }
-    //
-    // // all against all for imp2
-    // for (int timePointA = 1; timePointA <= imp2.getNFrames() - 1;
-    // timePointA++) {
-    // for (int timePointB = timePointA + 1; timePointB <= imp2
-    // .getNFrames(); timePointB++) {
-    // pairs.add(new ComparePair(listImp2.get(timePointA - 1),
-    // listImp2.get(timePointB - 1)));
-    // }
-    // }
-    // }
-    //
-    // return pairs;
-    // }
-
     public static String testRegistrationCompatibility(final ImagePlus imp1,
             final ImagePlus imp2) {
         // test time points
@@ -400,8 +268,8 @@ public class Stitching_Pairwise implements PlugIn {
         final int numSlices1 = imp1.getNSlices();
         final int numSlices2 = imp2.getNSlices();
 
-        if (numSlices1 == 1 && numSlices2 != 1 || numSlices1 != 1
-                && numSlices2 == 1) {
+        if (numSlices1 == 1 && numSlices2 != 1
+                || numSlices1 != 1 && numSlices2 == 1) {
             return "One image is 2d and the other one is 3d, cannot proceed...";
         }
 

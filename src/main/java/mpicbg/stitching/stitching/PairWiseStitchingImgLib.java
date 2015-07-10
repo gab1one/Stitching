@@ -6,31 +6,18 @@ import java.util.List;
 import mpicbg.stitching.utils.ComplexImageHelpers;
 import mpicbg.stitching.utils.FixedSizePriorityQueue;
 import net.imagej.ImgPlus;
-import net.imagej.ops.AbstractInplaceFunction;
-import net.imagej.ops.AbstractOutputFunction;
-import net.imagej.ops.InplaceFunction;
 import net.imagej.ops.OpService;
-import net.imagej.ops.convolve.CorrelateFFTImg;
-import net.imagej.ops.fft.filter.CreateFFTFilterMemory;
-import net.imagej.ops.join.AbstractJoinFunctions;
 import net.imglib2.Cursor;
-import net.imglib2.IterableInterval;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.neighborhood.Neighborhood;
 import net.imglib2.algorithm.neighborhood.RectangleShape;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImg;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
 import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.outofbounds.OutOfBoundsMirrorExpWindowingFactory;
-import net.imglib2.outofbounds.OutOfBoundsPeriodicFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
-import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
@@ -79,31 +66,33 @@ public class PairWiseStitchingImgLib {
             final ImgPlus<T> img1, final ImgPlus<T> img2,
             StitchingParameters params, OpService ops) {
 
-        int padding = 0;
-        OutOfBoundsMirrorExpWindowingFactory<T, Img<T>> zeroPad =
+        int padding = 512;
+        OutOfBoundsMirrorExpWindowingFactory<T, Img<T>> mirrorPad =
                 new OutOfBoundsMirrorExpWindowingFactory<T, Img<T>>(padding);
+
+        OutOfBoundsFactory<T, Img<T>> zeroPad =
+                new OutOfBoundsConstantValueFactory<T, Img<T>>(
+                        Util.getTypeFromInterval(img1).createVariable());
 
         long[] size = new long[] { 512, 512 };
         Img<FloatType> outManual = ArrayImgs.floats(size);
 
+        // Img<ComplexFloatType> fft1 = (Img<ComplexFloatType>)
+        // ops.run(FFT.class, img1.getImg(), mirrorPad);
+
         Img<ComplexFloatType> fft1 = (Img<ComplexFloatType>) ops.fft(img1);
         Img<ComplexFloatType> fft2 = (Img<ComplexFloatType>) ops.fft(img2);
+
+//        ImageJFunctions.show(fft1, "fft 1");
+//        ImageJFunctions.show(fft2, "fft 2");
 
         // TODO Create op for this!
         ComplexImageHelpers.normalizeComplexImage(fft1, normalizationThreshold);
         ComplexImageHelpers.normalizeAndConjugateComplexImage(fft2,
                 normalizationThreshold);
 
-        // // multiply the complex images
-        // Cursor<ComplexFloatType> fft1cursor = fft1.localizingCursor();
-        // RandomAccess<ComplexFloatType> fft2RA = fft2.randomAccess();
-        //
-        // while (fft1cursor.hasNext()) {
-        // fft1cursor.fwd();
-        // fft2RA.setPosition(fft1cursor);
-        // fft1cursor.get().mul(fft2RA.get());
-        // }
-        //
+//        ImageJFunctions.show(fft1, "normalized fft 1");
+//        ImageJFunctions.show(fft2, "normalized, conjugated fft2");
 
         // multiply the complex images
         Cursor<ComplexFloatType> fft1cursor = fft1.cursor();
@@ -114,99 +103,26 @@ public class PairWiseStitchingImgLib {
         }
 
         ops.ifft(outManual, fft1);
-        ImageJFunctions.show(outManual, "manual");
-
-        Img<FloatType> outAuto = ArrayImgs.floats(size);
-
-        ops.correlate(outAuto, img1, img2, size, zeroPad, zeroPad);
-
-        ImageJFunctions.show(outAuto, "opp-a-licious");
+//        ImageJFunctions.show(outManual, "manual");
 
         List<PhaseCorrelationPeak> peaks =
                 extractPhaseCorrelationPeaks(outManual, params.checkPeaks, ops);
         System.out.println(peaks.toString());
-        // out.toString();
-        // // FFT
-        // Img<ComplexFloatType> fftimg1 = (Img<ComplexFloatType>)
-        // ops.fft(img1);
-        // Img<ComplexFloatType> fftimg2 = (Img<ComplexFloatType>)
-        // ops.fft(img2);
-        //
-        // // TODO normalizeAndConjugate ?
-        //
-        // // Multiply
-        // // multiplyInPlace(fftimg1, fftimg2); // TODO Test if same output as
-        // \/
-        // ops.math().multiply(fftimg1, fftimg1, fftimg2);
-        //
-        // // TODO generalize types
-        // Img<FloatType> out =
-        // (Img<FloatType>) ops.createimg(img1.getImg(), new FloatType());
-        // // Inverse FFT
-        // ops.ifft(fftimg1, out);
-        //
-        // int numPeaks = params.checkPeaks;
-        //
-        // List<PhaseCorrelationPeak> peaks =
-        // extractPhaseCorrelationPeaks(out, numPeaks, ops);
-        //
-        // long[] dims = new long[out.numDimensions()];
-        // out.dimensions(dims);
-        // verifyWithCrossCorrelation(peaks, dims, img1, img2);
-        //
-        // phaseCorr.setKeepPhaseCorrelationMatrix(subpixelAccuracy);
 
-        // // result
-        // final PhaseCorrelationPeak pcp = phaseCorr.getShift();
-        // final float[] shift = new float[img1.getNumDimensions()];
-        // final PairWiseStitchingResult result;
-        //
-        // if (subpixelAccuracy) {
-        // final Image<FloatType> pcm = phaseCorr.getPhaseCorrelationMatrix();
-        //
-        // final ArrayList<DifferenceOfGaussianPeak<FloatType>> list =
-        // new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
-        // final Peak p = new Peak(pcp);
-        // list.add(p);
-        //
-        // final SubpixelLocalization<FloatType> spl =
-        // new SubpixelLocalization<FloatType>(pcm, list);
-        // final boolean move[] = new boolean[pcm.getNumDimensions()];
-        // for (int i = 0; i < pcm.getNumDimensions(); ++i) {
-        // move[i] = false;
-        // }
-        // spl.setCanMoveOutside(true);
-        // spl.setAllowedToMoveInDim(move);
-        // spl.setMaxNumMoves(0);
-        // spl.setAllowMaximaTolerance(false);
-        // spl.process();
-        //
-        // final Peak peak = (Peak) list.get(0);
-        //
-        // for (int d = 0; d < img1.getNumDimensions(); ++d) {
-        // shift[d] =
-        // peak.getPCPeak().getPosition()[d]
-        // + peak.getSubPixelPositionOffset(d);
-        // }
-        //
-        // pcm.close();
-        //
-        // result =
-        // new PairWiseStitchingResult(shift,
-        // pcp.getCrossCorrelationPeak(), p.getValue().get());
-        // } else {
-        // for (int d = 0; d < img1.getNumDimensions(); ++d) {
-        // shift[d] = pcp.getPosition()[d];
-        // }
-        //
-        // result =
-        // new PairWiseStitchingResult(shift,
-        // pcp.getCrossCorrelationPeak(),
-        // pcp.getPhaseCorrelationPeak());
-        // }
-        //
-        // return result;
-        return null;
+        verifyWithCrossCorrelation(peaks, size, img1, img2);
+
+        if (params.subpixelAccuracy) {
+            // TODO: Subpixel accuracy?
+        }
+
+        PhaseCorrelationPeak topPeak = peaks.get(peaks.size() - 1);
+
+        PairWiseStitchingResult result = new PairWiseStitchingResult(
+                topPeak.getPosition(), topPeak.phaseCorrelationPeak,
+                topPeak.getCrossCorrelationPeak());
+
+        return result;
+
     }
 
     private static <T extends RealType<T>> void verifyWithCrossCorrelation(

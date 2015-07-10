@@ -1,11 +1,12 @@
 package mpicbg.stitching.stitching;
 
 public class PairWiseStitchingResult {
-    float[] offset;
-    float crossCorrelation, phaseCorrelation;
+    long[] offset;
+    double crossCorrelation;
+    double phaseCorrelation;
 
-    public PairWiseStitchingResult(final float[] offset,
-            final float crossCorrelation, final float phaseCorrelation) {
+    public PairWiseStitchingResult(final long[] offset,
+            final double crossCorrelation, final double phaseCorrelation) {
         this.offset = offset;
         this.crossCorrelation = crossCorrelation;
         this.phaseCorrelation = phaseCorrelation;
@@ -15,7 +16,7 @@ public class PairWiseStitchingResult {
         return offset.length;
     }
 
-    public float[] getOffset() {
+    public long[] getOffset() {
         return offset;
     }
 
@@ -23,11 +24,11 @@ public class PairWiseStitchingResult {
         return offset[dim];
     }
 
-    public float getCrossCorrelation() {
+    public double getCrossCorrelation() {
         return crossCorrelation;
     }
 
-    public float getPhaseCorrelation() {
+    public double getPhaseCorrelation() {
         return phaseCorrelation;
     }
 }
